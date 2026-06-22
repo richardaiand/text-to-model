@@ -18,6 +18,37 @@
     --good: #34d399;
     --bad: #f87171;
     --radius: 10px;
+    --viewport-bg: radial-gradient(circle at 50% 30%, #151922, #0a0c11);
+    --grid-main: 0x2a3344;
+    --grid-sub: 0x1a2030;
+    --scene-bg: 0x0d1016;
+    --scene-fog: 0x0d1016;
+    --btn-hover: #232a37;
+    --card-hover: #1f2530;
+    --stats-bg: rgba(12,15,22,.7);
+    --code-color: #c8d3e6;
+  }
+  [data-theme="light"] {
+    --bg: #f0f2f5;
+    --bg-2: #e4e7ec;
+    --panel: #ffffff;
+    --panel-2: #e9ecf1;
+    --border: #d0d5dd;
+    --text: #1a1d23;
+    --muted: #6b7280;
+    --accent: #4f8ef7;
+    --accent-2: #7c3aed;
+    --good: #059669;
+    --bad: #dc2626;
+    --viewport-bg: radial-gradient(circle at 50% 30%, #ffffff, #e8ecf1);
+    --grid-main: 0xc0c5cd;
+    --grid-sub: 0xe0e3e8;
+    --scene-bg: 0xf0f2f5;
+    --scene-fog: 0xf0f2f5;
+    --btn-hover: #d6dbe3;
+    --card-hover: #e9ecf3;
+    --stats-bg: rgba(255,255,255,.75);
+    --code-color: #3b4252;
   }
   * { box-sizing: border-box; }
   html, body { height: 100%; margin: 0; }
@@ -74,7 +105,7 @@
     cursor: pointer;
     transition: background .15s, border-color .15s, transform .05s;
   }
-  button:hover { background: #232a37; }
+  button:hover { background: var(--btn-hover); }
   button:active { transform: translateY(1px); }
   button.primary {
     background: linear-gradient(180deg, var(--accent), #4f8ef7);
@@ -192,14 +223,14 @@
     overflow: auto;
     font-size: 12px;
     line-height: 1.5;
-    color: #c8d3e6;
+    color: var(--code-color);
     white-space: pre-wrap;
     word-break: break-word;
   }
   .viewport {
     position: relative;
     min-width: 0;
-    background: radial-gradient(circle at 50% 30%, #151922, #0a0c11);
+    background: var(--viewport-bg);
   }
   canvas { display: block; width: 100%; height: 100%; }
   .hud {
@@ -212,7 +243,7 @@
     gap: 12px;
   }
   .stats {
-    background: rgba(12,15,22,.7);
+    background: var(--stats-bg);
     border: 1px solid var(--border);
     border-radius: var(--radius);
     padding: 8px 12px;
@@ -296,8 +327,8 @@
     cursor: pointer;
     transition: border-color .15s, background .15s;
   }
-  .model-card:hover { border-color: var(--accent); background: #1f2530; }
-  .model-card.selected { border-color: var(--accent); background: #1f2530; }
+  .model-card:hover { border-color: var(--accent); background: var(--card-hover); }
+  .model-card.selected { border-color: var(--accent); background: var(--card-hover); }
   .model-card.disabled { opacity: .5; cursor: not-allowed; }
   .model-card.disabled:hover { border-color: var(--border); background: var(--bg-2); }
   .model-info { flex: 1; min-width: 0; }
@@ -322,6 +353,73 @@
   .section-label { font-size: 12px; color: var(--muted); margin: 14px 0 4px; text-transform: uppercase; letter-spacing: 1px; }
   .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
   .help { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .ai-notes {
+    font-size: 13px;
+    line-height: 1.5;
+    color: var(--text);
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px 12px;
+    display: none;
+  }
+  .ai-notes.show { display: block; }
+  .ai-notes-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--accent);
+    margin-bottom: 4px;
+    font-weight: 600;
+  }
+  .chat-history {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    max-height: 240px;
+    overflow-y: auto;
+    display: none;
+  }
+  .chat-history.show { display: flex; }
+  .chat-msg {
+    font-size: 12px;
+    line-height: 1.4;
+    padding: 8px 10px;
+    border-radius: 8px;
+    word-break: break-word;
+  }
+  .chat-msg.user {
+    background: var(--panel-2);
+    border-left: 3px solid var(--accent);
+  }
+  .chat-msg.ai {
+    background: var(--bg-2);
+    border-left: 3px solid var(--accent-2);
+  }
+  .chat-msg-role {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    color: var(--muted);
+    margin-bottom: 2px;
+    font-weight: 600;
+  }
+  .filename-input {
+    width: 110px;
+    font-size: 12px;
+    padding: 6px 8px;
+    background: var(--stats-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    backdrop-filter: blur(6px);
+  }
+  .filename-input:focus { outline: none; border-color: var(--accent); }
+  .theme-btn {
+    font-size: 16px;
+    padding: 6px 10px;
+    line-height: 1;
+  }
   @media (max-width: 760px) {
     main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
     aside { max-height: 42vh; border-right: none; border-bottom: 1px solid var(--border); }
@@ -344,6 +442,7 @@
     </div>
     <div class="spacer"></div>
     <div class="pill" id="modelPill" title="Active model">no model set</div>
+    <button class="ghost theme-btn" id="themeBtn" title="Toggle light/dark">🌙</button>
     <button class="ghost" id="settingsBtn">Settings</button>
   </header>
 
@@ -362,6 +461,11 @@
         <button class="ghost" id="clearBtn">New</button>
       </div>
       <div class="status" id="status"></div>
+      <div class="ai-notes" id="aiNotes">
+        <div class="ai-notes-label">AI's Plan</div>
+        <div id="aiNotesText"></div>
+      </div>
+      <div class="chat-history" id="chatHistory"></div>
       <details>
         <summary>Generated code (agent output)</summary>
         <pre id="codeView">No code yet.</pre>
@@ -378,9 +482,10 @@
       <div class="hud">
         <div class="stats" id="stats">No model</div>
         <div class="exports">
-          <button data-export="stl" disabled>Download STL</button>
-          <button data-export="obj" disabled>Download OBJ</button>
-          <button data-export="glb" disabled>Download GLB</button>
+          <input class="filename-input" id="filename" value="model" placeholder="filename" />
+          <button data-export="stl" disabled>STL</button>
+          <button data-export="obj" disabled>OBJ</button>
+          <button data-export="glb" disabled>GLB</button>
         </div>
       </div>
     </section>
@@ -565,6 +670,7 @@ const settings = {
 };
 
 let deepThink = ls.get('ai3d.deepThink', 'false') === 'true';
+let lightTheme = ls.get('ai3d.theme', 'dark') === 'light';
 
 const DEEP_THINK_SUFFIX = `
 
@@ -606,9 +712,26 @@ dir.position.set(10, 16, 8); scene.add(dir);
 const dir2 = new THREE.DirectionalLight(0x88aaff, 0.5);
 dir2.position.set(-8, 6, -6); scene.add(dir2);
 
-const grid = new THREE.GridHelper(40, 40, 0x2a3344, 0x1a2030);
+let grid = new THREE.GridHelper(40, 40, 0x2a3344, 0x1a2030);
 scene.add(grid);
 const axes = new THREE.AxesHelper(2); axes.visible = false; scene.add(axes);
+
+function applyTheme() {
+  document.body.setAttribute('data-theme', lightTheme ? 'light' : 'dark');
+  $('themeBtn').textContent = lightTheme ? '☀️' : '🌙';
+  const bg = lightTheme ? 0xf0f2f5 : 0x0d1016;
+  scene.background = new THREE.Color(bg);
+  scene.fog = new THREE.Fog(bg, 40, 120);
+  scene.remove(grid);
+  grid.geometry?.dispose();
+  grid.material?.dispose();
+  grid = new THREE.GridHelper(40, 40,
+    lightTheme ? 0xc0c5cd : 0x2a3344,
+    lightTheme ? 0xe0e3e8 : 0x1a2030
+  );
+  scene.add(grid);
+}
+applyTheme();
 
 let currentModel = null;
 
@@ -686,6 +809,17 @@ function extractCode(text) {
   const fnIdx = text.indexOf('function buildModel');
   if (fnIdx >= 0) return text.slice(fnIdx).trim();
   return text.trim();
+}
+
+function extractPlan(text) {
+  const fence = text.match(/```(?:js|javascript)?\s*([\s\S]*?)```/i);
+  if (fence) {
+    const before = text.slice(0, fence.index).trim();
+    return before.replace(/^#+\s*/gm, '').trim();
+  }
+  const fnIdx = text.indexOf('function buildModel');
+  if (fnIdx > 0) return text.slice(0, fnIdx).trim();
+  return '';
 }
 
 function runModelCode(code) {
@@ -782,6 +916,12 @@ async function generate() {
   try {
     const raw = await callAgent(prompt);
     const code = extractCode(raw);
+    const plan = extractPlan(raw);
+    if (plan) {
+      $('aiNotesText').textContent = plan;
+      $('aiNotes').classList.add('show');
+    }
+    renderChatHistory();
     runModelCode(code);
     setStatus('Model ready. Orbit to inspect, then export.', 'ok');
   } catch (e) {
@@ -804,19 +944,20 @@ function download(blob, filename) {
 
 async function exportModel(format) {
   if (!currentModel) return;
+  const name = ($('filename').value.trim() || 'model').replace(/[^a-zA-Z0-9_-]/g, '_');
   try {
     if (format === 'stl') {
       const ascii = new STLExporter().parse(currentModel);
-      download(new Blob([ascii], { type: 'model/stl' }), 'model.stl');
+      download(new Blob([ascii], { type: 'model/stl' }), name + '.stl');
     } else if (format === 'obj') {
       const text = new OBJExporter().parse(currentModel);
-      download(new Blob([text], { type: 'text/plain' }), 'model.obj');
+      download(new Blob([text], { type: 'text/plain' }), name + '.obj');
     } else if (format === 'glb') {
       await new Promise((resolve, reject) => {
         new GLTFExporter().parse(
           currentModel,
           (result) => {
-            download(new Blob([result], { type: 'model/gltf-binary' }), 'model.glb');
+            download(new Blob([result], { type: 'model/gltf-binary' }), name + '.glb');
             resolve();
           },
           (err) => reject(err),
@@ -824,7 +965,7 @@ async function exportModel(format) {
         );
       });
     }
-    setStatus(`Exported ${format.toUpperCase()}.`, 'ok');
+    setStatus(`Exported ${name}.${format}`, 'ok');
   } catch (e) {
     setStatus('Export failed: ' + e.message, 'error');
   }
@@ -837,6 +978,10 @@ function newModel() {
   $('codeView').textContent = 'No code yet.';
   $('stats').textContent = 'No model';
   $('emptyHint').style.display = '';
+  $('aiNotes').classList.remove('show');
+  $('aiNotesText').textContent = '';
+  $('chatHistory').classList.remove('show');
+  $('chatHistory').innerHTML = '';
   document.querySelectorAll('.exports button').forEach((b) => (b.disabled = true));
   setStatus('');
 }
@@ -936,6 +1081,32 @@ function buildPresets() {
   });
 }
 
+function renderChatHistory() {
+  const wrap = $('chatHistory');
+  wrap.innerHTML = '';
+  const convo = messages.filter((m) => m.role !== 'system');
+  if (convo.length === 0) return;
+  convo.forEach((m) => {
+    const div = document.createElement('div');
+    div.className = 'chat-msg ' + (m.role === 'user' ? 'user' : 'ai');
+    const role = document.createElement('div');
+    role.className = 'chat-msg-role';
+    role.textContent = m.role === 'user' ? 'You' : 'AI';
+    const text = document.createElement('div');
+    let display = m.content;
+    if (m.role === 'assistant') {
+      const plan = extractPlan(m.content);
+      display = plan || '(generated code)';
+    }
+    text.textContent = display;
+    div.appendChild(role);
+    div.appendChild(text);
+    wrap.appendChild(div);
+  });
+  wrap.classList.add('show');
+  wrap.scrollTop = wrap.scrollHeight;
+}
+
 $('generateBtn').addEventListener('click', generate);
 $('clearBtn').addEventListener('click', newModel);
 $('settingsBtn').addEventListener('click', openSettings);
@@ -946,6 +1117,11 @@ document.querySelectorAll('.exports button').forEach((b) =>
 );
 $('prompt').addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generate();
+});
+$('themeBtn').addEventListener('click', () => {
+  lightTheme = !lightTheme;
+  ls.set('ai3d.theme', lightTheme ? 'light' : 'dark');
+  applyTheme();
 });
 
 const deepThinkEl = $('deepThinkToggle');
