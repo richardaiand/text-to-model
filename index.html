@@ -803,10 +803,22 @@ let dbPromise = null;
 
 function openDB() {
   if (dbPromise) return dbPromise;
+  if (!window.indexedDB) {
+    dbPromise = Promise.reject(new Error('IndexedDB not supported in this browser'));
+    return dbPromise;
+  }
   dbPromise = new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error('IndexedDB open timed out')), 3000);
+    let settled = false;
+    const done = (fn) => (...args) => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      fn(...args);
+    };
     const req = indexedDB.open(DB_NAME, DB_VERSION);
-    req.onerror = () => reject(req.error);
-    req.onsuccess = () => resolve(req.result);
+    req.onerror = done(() => reject(req.error || new Error('IndexedDB error')));
+    req.onsuccess = done(() => resolve(req.result));
     req.onupgradeneeded = (e) => {
       const db = e.target.result;
       if (!db.objectStoreNames.contains('accounts')) {
@@ -1699,43 +1711,49 @@ $('authSignUp').addEventListener('click', handleSignUp);
 $('authCancel').addEventListener('click', closeAuthDialog);
 
 /* ---------- Init ---------- */
-async function init() {
-  try {
-    buildModelList();
-    buildPresets();
-    updateModelPill();
-    setChatWidth(50);
-    setTimeout(resize, 50);
-    setTimeout(resize, 200);
+window.addEventListener('error', (e) => {
+  console.error('window error', e.error || e.message);
+  setStatus('Script error: ' + (e.error?.message || e.message), 'error');
+});
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('unhandled rejection', e.reason);
+  setStatus('Unhandled error: ' + (e.reason?.message || e.reason), 'error');
+});
 
-    const savedAccount = ls.get('ai3d.currentAccount', '');
-    if (savedAccount) {
-      try {
-        currentAccount = await dbRequest('accounts', 'readonly', store => store.get(savedAccount));
-        if (currentAccount) {
-          await loadAccountSettings();
-          applyTheme();
-          syncDeepThink(false);
-          const projects = await getProjects(currentAccount.username);
-          if (projects.length) await loadProject(projects[0]);
-        } else {
-          ls.del('ai3d.currentAccount');
-        }
-      } catch (e) {
-        console.error('account load error', e);
-        ls.del('ai3d.currentAccount');
-        setStatus('Could not load saved account. Using guest mode.', 'error');
-      }
+async function init() {
+  buildModelList();
+  buildPresets();
+  updateModelPill();
+  setChatWidth(50);
+  setTimeout(resize, 50);
+  setTimeout(resize, 200);
+
+  // Render UI immediately so buttons work even if DB is slow/blocked
+  updateAccountUI();
+  await renderProjectList();
+  renderChatThread();
+  if (!settings.apiKey) setStatus('Open Settings to add your API key.', '');
+
+  const savedAccount = ls.get('ai3d.currentAccount', '');
+  if (!savedAccount) return;
+
+  try {
+    currentAccount = await dbRequest('accounts', 'readonly', store => store.get(savedAccount));
+    if (currentAccount) {
+      await loadAccountSettings();
+      applyTheme();
+      syncDeepThink(false);
+      const projects = await getProjects(currentAccount.username);
+      if (projects.length) await loadProject(projects[0]);
+      updateAccountUI();
+      await renderProjectList();
+    } else {
+      ls.del('ai3d.currentAccount');
     }
-    updateAccountUI();
-    await renderProjectList();
-    renderChatThread();
-    if (!settings.apiKey) setStatus('Open Settings to add your API key.', '');
   } catch (e) {
-    console.error('init error', e);
-    setStatus('Startup error: ' + e.message, 'error');
-    updateAccountUI();
-    renderChatThread();
+    console.error('account load error', e);
+    ls.del('ai3d.currentAccount');
+    setStatus('Could not load saved account. Using guest mode.', 'error');
   }
 }
 init();
