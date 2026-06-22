@@ -15,8 +15,13 @@ const MIME = {
   ".ico": "image/x-icon",
 };
 
-const server = http.createServer((req, res) => {
+const server = http.createServer(async (req, res) => {
   let urlPath = decodeURIComponent(req.url.split("?")[0]);
+
+  if (urlPath === "/api/chat" && req.method === "POST") {
+    return handleChatProxy(req, res);
+  }
+
   if (urlPath === "/") urlPath = "/index.html";
   const filePath = path.join(ROOT, path.normalize(urlPath));
   if (!filePath.startsWith(ROOT)) {
@@ -35,6 +40,42 @@ const server = http.createServer((req, res) => {
     res.end(data);
   });
 });
+
+function readBody(req) {
+  return new Promise((resolve, reject) => {
+    let data = "";
+    req.on("data", (c) => (data += c));
+    req.on("end", () => resolve(data));
+    req.on("error", reject);
+  });
+}
+
+async function handleChatProxy(req, res) {
+  try {
+    const body = JSON.parse(await readBody(req));
+    const { endpoint, apiKey, model, messages, temperature } = body;
+    if (!endpoint || !apiKey || !model || !messages) {
+      res.writeHead(400, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: "Missing endpoint, apiKey, model, or messages" }));
+      return;
+    }
+    const base = String(endpoint).replace(/\/+$/, "");
+    const upstream = await fetch(base + "/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: "Bearer " + apiKey,
+      },
+      body: JSON.stringify({ model, messages, temperature: temperature ?? 0.7 }),
+    });
+    const text = await upstream.text();
+    res.writeHead(upstream.status, { "Content-Type": "application/json" });
+    res.end(text);
+  } catch (e) {
+    res.writeHead(502, { "Content-Type": "application/json" });
+    res.end(JSON.stringify({ error: "Proxy error: " + e.message }));
+  }
+}
 
 server.listen(PORT, () => {
   console.log(`text-to-model serving on port ${PORT}`);

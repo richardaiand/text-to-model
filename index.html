@@ -532,13 +532,12 @@ function baseEndpoint() {
 async function callAgent(userPrompt) {
   messages.push({ role: 'user', content: userPrompt });
   if (messages.length > 12) messages = [messages[0], ...messages.slice(-10)];
-  const res = await fetch(baseEndpoint() + '/chat/completions', {
+  const res = await fetch('/api/chat', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: 'Bearer ' + settings.apiKey,
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
+      endpoint: baseEndpoint(),
+      apiKey: settings.apiKey,
       model: settings.model,
       messages,
       temperature: 0.7,
