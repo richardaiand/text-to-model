@@ -122,6 +122,38 @@
   textarea:focus { outline: none; border-color: var(--accent); }
   .row { display: flex; gap: 8px; }
   .row > button { flex: 1; }
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+  }
+  .toggle-row:hover { color: var(--text); }
+  .toggle {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--border);
+    transition: background .2s;
+    flex-shrink: 0;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--text);
+    transition: transform .2s;
+  }
+  .toggle-row.on .toggle { background: var(--accent-2); }
+  .toggle-row.on .toggle::after { transform: translateX(16px); }
+  .toggle-row.on { color: var(--text); }
+  .toggle-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .examples { display: flex; flex-wrap: wrap; gap: 6px; }
   .chip {
     font-size: 12px;
@@ -320,6 +352,11 @@
       <h2>Describe your model</h2>
       <textarea id="prompt" placeholder="e.g. a glossy red apple with a small brown stem and a green leaf"></textarea>
       <div class="examples" id="examples"></div>
+      <div class="toggle-row" id="deepThinkToggle">
+        <div class="toggle"></div>
+        <span>Deep Think</span>
+      </div>
+      <div class="toggle-desc" id="deepThinkDesc">AI plans carefully before coding. Better results, uses more of the 30s limit.</div>
       <div class="row">
         <button class="primary" id="generateBtn">Generate</button>
         <button class="ghost" id="clearBtn">New</button>
@@ -452,7 +489,25 @@ const settings = {
   apiKey: ls.get('ai3d.apiKey', ''),
 };
 
-let messages = [{ role: 'system', content: SYSTEM_PROMPT }];
+let deepThink = ls.get('ai3d.deepThink', 'false') === 'true';
+
+const DEEP_THINK_SUFFIX = `
+
+IMPORTANT — DEEP THINK MODE:
+Before writing any code, think through your design step by step:
+1. Identify every distinct part of the object (body, handle, lid, base, details).
+2. For each part, choose the best THREE.js primitive geometry and explain why.
+3. Plan the exact position, rotation, and scale of each part relative to the center.
+4. Choose material colors, roughness, and metalness values that make the object look realistic.
+5. Consider how parts connect — avoid floating parts, z-fighting, or gaps.
+6. Only after this planning, write the buildModel(THREE) function following all rules above.
+Take your time. Quality matters more than speed. Use the full reasoning budget.`;
+
+function getSystemPrompt() {
+  return deepThink ? SYSTEM_PROMPT + DEEP_THINK_SUFFIX : SYSTEM_PROMPT;
+}
+
+let messages = [{ role: 'system', content: getSystemPrompt() }];
 
 const renderer = new THREE.WebGLRenderer({ canvas: $('c'), antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
@@ -647,7 +702,7 @@ async function generate() {
 
   const btn = $('generateBtn');
   btn.disabled = true;
-  showLoader('Agent is modeling…', true);
+  showLoader(deepThink ? 'Thinking deeply…' : 'Agent is modeling…', true);
   setStatus('Generating…');
   try {
     const raw = await callAgent(prompt);
@@ -702,7 +757,7 @@ async function exportModel(format) {
 
 function newModel() {
   if (currentModel) { scene.remove(currentModel); disposeObject(currentModel); currentModel = null; }
-  messages = [{ role: 'system', content: SYSTEM_PROMPT }];
+  messages = [{ role: 'system', content: getSystemPrompt() }];
   $('prompt').value = '';
   $('codeView').textContent = 'No code yet.';
   $('stats').textContent = 'No model';
@@ -817,6 +872,15 @@ document.querySelectorAll('.exports button').forEach((b) =>
 $('prompt').addEventListener('keydown', (e) => {
   if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generate();
 });
+
+const deepThinkEl = $('deepThinkToggle');
+function syncDeepThink() {
+  deepThinkEl.classList.toggle('on', deepThink);
+  ls.set('ai3d.deepThink', String(deepThink));
+  messages = [{ role: 'system', content: getSystemPrompt() }];
+}
+deepThinkEl.addEventListener('click', () => { deepThink = !deepThink; syncDeepThink(); });
+syncDeepThink();
 
 buildExampleChips();
 buildModelList();
