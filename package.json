@@ -1,0 +1,13 @@
+{
+  "name": "text-to-model",
+  "version": "1.0.0",
+  "description": "Turn text prompts into real, downloadable 3D model files via an AI agent and Three.js.",
+  "private": true,
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": "20.x"
+  }
+}
