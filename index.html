@@ -413,11 +413,59 @@ import { STLExporter } from 'three/addons/exporters/STLExporter.js';
 import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 
+const HELPER_LIB = `
+const _bbox = (o) => new THREE.Box3().setFromObject(o);
+const _center = (o) => _bbox(o).getCenter(new THREE.Vector3());
+const _size = (o) => _bbox(o).getSize(new THREE.Vector3());
+
+function placeOn(child, parent, face, opts) {
+  opts = opts || {};
+  var gap = opts.gap || 0;
+  var pBox = _bbox(parent);
+  var cBox = _bbox(child);
+  var pC = pBox.getCenter(new THREE.Vector3());
+  var cC = cBox.getCenter(new THREE.Vector3());
+  var move = pC.clone().sub(cC);
+  switch(face) {
+    case 'top':    move.y = pBox.max.y + gap - cBox.min.y; break;
+    case 'bottom': move.y = pBox.min.y - gap - cBox.max.y; break;
+    case 'right':  move.x = pBox.max.x + gap - cBox.min.x; break;
+    case 'left':   move.x = pBox.min.x - gap - cBox.max.x; break;
+    case 'front':  move.z = pBox.min.z - gap - cBox.max.z; break;
+    case 'back':   move.z = pBox.max.z + gap - cBox.min.z; break;
+  }
+  if (opts.offsetX != null) move.x += opts.offsetX;
+  if (opts.offsetY != null) move.y += opts.offsetY;
+  if (opts.offsetZ != null) move.z += opts.offsetZ;
+  child.position.add(move);
+  return child;
+}
+
+function stack(child, parent) {
+  return placeOn(child, parent, 'top', { gap: 0 });
+}
+
+function nestle(child, parent, face, depth) {
+  return placeOn(child, parent, face, { gap: -(depth || 0.1) });
+}
+
+function align(child, parent, axes) {
+  axes = axes || 'xyz';
+  var pC = _center(parent);
+  var cC = _center(child);
+  var d = pC.clone().sub(cC);
+  if (axes.indexOf('x') >= 0) child.position.x += d.x;
+  if (axes.indexOf('y') >= 0) child.position.y += d.y;
+  if (axes.indexOf('z') >= 0) child.position.z += d.z;
+  return child;
+}
+`;
+
 const SYSTEM_PROMPT = `You are an expert procedural 3D modeling agent. The user describes an object; you turn it into a real 3D model by writing JavaScript that builds Three.js geometry.
 
 OUTPUT CONTRACT (very important):
 - Reply with a short one-sentence plan, then a SINGLE fenced JavaScript code block.
-- The code block MUST define a function named buildModel(THREE) and end with "return buildModel(THREE);" is NOT needed — just define the function. The host appends the call.
+- The code block MUST define a function named buildModel(THREE). The host calls it for you.
 - buildModel(THREE) must RETURN a THREE.Object3D (usually a THREE.Group containing meshes).
 - Do NOT import anything, do NOT load external assets/textures/fonts, do NOT use fetch or DOM. Only use the THREE object passed in.
 - Use MeshStandardMaterial for realistic shading and correct export.
@@ -427,22 +475,49 @@ OUTPUT CONTRACT (very important):
 - Make the result recognizable and visually clean. Prefer low-medium poly counts.
 - When refining, incorporate the user's new instructions to modify the previous design.
 
-Example shape:
+CONNECTION HELPERS (use these — do NOT guess coordinates):
+The host injects these helper functions into your sandbox. Use them so parts connect cleanly instead of floating.
+- placeOn(child, parent, face, opts?) — position child mesh so it touches parent's face.
+  face: 'top'|'bottom'|'left'|'right'|'front'|'back'
+  opts.gap: distance between surfaces (0 = touching, negative = overlapping/embedded, positive = floating)
+  opts.offsetY / offsetX / offsetZ: fine-tune position after placement
+  Auto-centers child on the non-face axes.
+- stack(child, parent) — shortcut for placeOn(child, parent, 'top').
+- nestle(child, parent, face, depth) — embed child INTO parent by depth (e.g. a handle into a mug body). Uses negative gap.
+- align(child, parent, axes) — align child center to parent center on given axes string (e.g. 'y', 'xz', 'xyz').
+- bbox(obj), center(obj), size(obj) — bounding box / center point / dimensions of any object.
+
+CONNECTION RULES:
+- NEVER hardcode position guesses. Use placeOn, stack, or nestle for every connection.
+- Parts must visually touch or overlap at joints — no floating parts, no gaps.
+- For handles: create handle, rotate it, add to group, then nestle(handle, body, 'right', 0.15).
+- For roofs: stack(roof, walls).
+- For lids: stack(lid, body) then adjust if needed.
+- For appendages (arms, legs, ears): nestle(part, body, face, 0.1).
+- You may fine-tune with .position adjustments AFTER using a helper, but always start with the helper.
+
+Example — a mug with a properly connected handle:
 \`\`\`js
 function buildModel(THREE) {
   const g = new THREE.Group();
   const body = new THREE.Mesh(
-    new THREE.SphereGeometry(1, 32, 24),
-    new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.35, metalness: 0.1 })
+    new THREE.CylinderGeometry(1, 1, 2.4, 32),
+    new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.3, metalness: 0.05 })
   );
-  body.scale.set(1, 1.05, 1);
   g.add(body);
-  const stem = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.05, 0.07, 0.4, 12),
-    new THREE.MeshStandardMaterial({ color: 0x6b4f2a })
+  const handle = new THREE.Mesh(
+    new THREE.TorusGeometry(0.5, 0.12, 16, 32, Math.PI),
+    new THREE.MeshStandardMaterial({ color: 0xeeeeee, roughness: 0.3, metalness: 0.05 })
   );
-  stem.position.y = 1.1;
-  g.add(stem);
+  handle.rotation.y = Math.PI / 2;
+  g.add(handle);
+  nestle(handle, body, 'right', 0.15);
+  const coffee = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.85, 0.85, 0.05, 32),
+    new THREE.MeshStandardMaterial({ color: 0x3b1f0b, roughness: 0.8 })
+  );
+  g.add(coffee);
+  placeOn(coffee, body, 'top', { gap: -0.1 });
   return g;
 }
 \`\`\``;
@@ -497,10 +572,10 @@ IMPORTANT — DEEP THINK MODE:
 Before writing any code, think through your design step by step:
 1. Identify every distinct part of the object (body, handle, lid, base, details).
 2. For each part, choose the best THREE.js primitive geometry and explain why.
-3. Plan the exact position, rotation, and scale of each part relative to the center.
+3. Plan which CONNECTION HELPER to use for each joint (placeOn, stack, nestle, align).
 4. Choose material colors, roughness, and metalness values that make the object look realistic.
-5. Consider how parts connect — avoid floating parts, z-fighting, or gaps.
-6. Only after this planning, write the buildModel(THREE) function following all rules above.
+5. Verify every part connects — no floating parts, no gaps, no z-fighting. Use nestle for handles and appendages.
+6. Only after this planning, write the buildModel(THREE) function using the helpers.
 Take your time. Quality matters more than speed. Use the full reasoning budget.`;
 
 function getSystemPrompt() {
@@ -617,7 +692,7 @@ function runModelCode(code) {
   $('codeView').textContent = code;
   const runner = new Function(
     'THREE',
-    code + '\n;if(typeof buildModel==="function")return buildModel(THREE);if(typeof buildModel!=="undefined")return buildModel;throw new Error("buildModel is not defined in the generated code");'
+    HELPER_LIB + '\n' + code + '\n;if(typeof buildModel==="function")return buildModel(THREE);if(typeof buildModel!=="undefined")return buildModel;throw new Error("buildModel is not defined in the generated code");'
   );
   const obj = runner(THREE);
   setModel(obj);
