@@ -519,15 +519,15 @@ import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 
 const HELPER_LIB = `
-function bbox(o) { return new THREE.Box3().setFromObject(o); }
-function center(o) { return bbox(o).getCenter(new THREE.Vector3()); }
-function size(o) { return bbox(o).getSize(new THREE.Vector3()); }
+function measureBox(o) { return new THREE.Box3().setFromObject(o); }
+function centerOf(o) { return measureBox(o).getCenter(new THREE.Vector3()); }
+function sizeOf(o) { return measureBox(o).getSize(new THREE.Vector3()); }
 
 function placeOn(child, parent, face, opts) {
   opts = opts || {};
   var gap = opts.gap || 0;
-  var pBox = bbox(parent);
-  var cBox = bbox(child);
+  var pBox = measureBox(parent);
+  var cBox = measureBox(child);
   var pC = pBox.getCenter(new THREE.Vector3());
   var cC = cBox.getCenter(new THREE.Vector3());
   var move = pC.clone().sub(cC);
@@ -556,8 +556,8 @@ function nestle(child, parent, face, depth) {
 
 function align(child, parent, axes) {
   axes = axes || 'xyz';
-  var pC = center(parent);
-  var cC = center(child);
+  var pC = centerOf(parent);
+  var cC = centerOf(child);
   var d = pC.clone().sub(cC);
   if (axes.indexOf('x') >= 0) child.position.x += d.x;
   if (axes.indexOf('y') >= 0) child.position.y += d.y;
@@ -590,7 +590,7 @@ The host injects these helper functions into your sandbox. Use them so parts con
 - stack(child, parent) — shortcut for placeOn(child, parent, 'top').
 - nestle(child, parent, face, depth) — embed child INTO parent by depth (e.g. a handle into a mug body). Uses negative gap.
 - align(child, parent, axes) — align child center to parent center on given axes string (e.g. 'y', 'xz', 'xyz').
-- bbox(obj), center(obj), size(obj) — bounding box / center point / dimensions of any object.
+- measureBox(obj), centerOf(obj), sizeOf(obj) — bounding box / center point / dimensions of any object.
 
 CONNECTION RULES:
 - NEVER hardcode position guesses. Use placeOn, stack, or nestle for every connection.
