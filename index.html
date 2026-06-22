@@ -128,6 +128,7 @@
     min-height: 0;
     min-width: 0;
   }
+  main.drawer-collapsed .project-drawer { display: none; }
 
   /* Project drawer */
   .project-drawer {
@@ -363,7 +364,7 @@
     position: relative;
     background: var(--viewport-bg);
   }
-  canvas { display: block; width: 100%; height: 100%; }
+  canvas { display: block; width: 100%; height: 100%; touch-action: none; outline: none; }
   .empty-hint {
     position: absolute;
     inset: 0;
@@ -549,15 +550,16 @@
 </head>
 <body>
   <header>
+    <button class="ghost" id="toggleDrawerBtn" title="Toggle projects" style="font-size:18px;padding:4px 10px">☰</button>
     <div class="brand">
       <div class="logo"></div>
       <div>AI 3D Studio <small>· prompt to model</small></div>
     </div>
+    <div id="accountSection" style="margin-left:12px"></div>
     <div class="spacer"></div>
     <div class="pill" id="modelPill" title="Active model">no model set</div>
     <button class="ghost theme-btn" id="themeBtn" title="Toggle light/dark">🌙</button>
     <button class="ghost" id="settingsBtn">Settings</button>
-    <div id="accountSection"></div>
   </header>
 
   <main id="mainArea">
@@ -988,6 +990,10 @@ camera.position.set(8, 6, 10);
 const controls = new OrbitControls(camera, renderer.domElement);
 controls.enableDamping = true;
 controls.dampingFactor = 0.08;
+controls.enableRotate = true;
+controls.enablePan = true;
+controls.enableZoom = true;
+controls.enabled = true;
 
 scene.add(new THREE.HemisphereLight(0xbfd4ff, 0x202830, 0.9));
 const ambient = new THREE.AmbientLight(0xffffff, 0.25); scene.add(ambient);
@@ -1020,6 +1026,7 @@ applyTheme();
 let currentModel = null;
 let currentAbort = null;
 let genId = 0;
+let drawerOpen = true;
 
 function resize() {
   const w = renderer.domElement.clientWidth;
@@ -1217,7 +1224,8 @@ async function generate() {
     if (currentProject && currentAccount) {
       const userMsg = { projectId: currentProject.id, role: 'user', content: prompt, createdAt: Date.now() };
       const aiMsg = { projectId: currentProject.id, role: 'assistant', content: raw, plan, code, createdAt: Date.now() + 1 };
-      await Promise.all([saveMessage(userMsg), saveMessage(aiMsg)]);
+      await saveMessage(userMsg);
+      await saveMessage(aiMsg);
       currentProject.title = currentProject.title || prompt.slice(0, 40);
       await saveProject(currentProject);
       await renderProjectList();
@@ -1644,6 +1652,11 @@ document.addEventListener('mouseup', () => {
 /* ---------- Event wiring ---------- */
 $('generateBtn').addEventListener('click', generate);
 $('newProjectBtn').addEventListener('click', newProject);
+$('toggleDrawerBtn').addEventListener('click', () => {
+  drawerOpen = !drawerOpen;
+  $('mainArea').classList.toggle('drawer-collapsed', !drawerOpen);
+  setChatWidth(chatWidthPct);
+});
 $('settingsBtn').addEventListener('click', openSettings);
 $('saveSettings').addEventListener('click', saveSettings);
 $('cancelSettings').addEventListener('click', () => $('settingsDlg').close());
@@ -1682,33 +1695,43 @@ $('authCancel').addEventListener('click', closeAuthDialog);
 
 /* ---------- Init ---------- */
 async function init() {
-  buildModelList();
-  buildPresets();
-  updateModelPill();
-  setChatWidth(50);
+  try {
+    buildModelList();
+    buildPresets();
+    updateModelPill();
+    setChatWidth(50);
+    setTimeout(resize, 50);
+    setTimeout(resize, 200);
 
-  const savedAccount = ls.get('ai3d.currentAccount', '');
-  if (savedAccount) {
-    try {
-      currentAccount = await dbRequest('accounts', 'readonly', store => store.get(savedAccount));
-      if (currentAccount) {
-        await loadAccountSettings();
-        applyTheme();
-        syncDeepThink(false);
-        const projects = await getProjects(currentAccount.username);
-        if (projects.length) await loadProject(projects[0]);
-      } else {
+    const savedAccount = ls.get('ai3d.currentAccount', '');
+    if (savedAccount) {
+      try {
+        currentAccount = await dbRequest('accounts', 'readonly', store => store.get(savedAccount));
+        if (currentAccount) {
+          await loadAccountSettings();
+          applyTheme();
+          syncDeepThink(false);
+          const projects = await getProjects(currentAccount.username);
+          if (projects.length) await loadProject(projects[0]);
+        } else {
+          ls.del('ai3d.currentAccount');
+        }
+      } catch (e) {
+        console.error('account load error', e);
         ls.del('ai3d.currentAccount');
+        setStatus('Could not load saved account. Using guest mode.', 'error');
       }
-    } catch (e) {
-      console.error('account load error', e);
-      ls.del('ai3d.currentAccount');
     }
+    updateAccountUI();
+    await renderProjectList();
+    renderChatThread();
+    if (!settings.apiKey) setStatus('Open Settings to add your API key.', '');
+  } catch (e) {
+    console.error('init error', e);
+    setStatus('Startup error: ' + e.message, 'error');
+    updateAccountUI();
+    renderChatThread();
   }
-  updateAccountUI();
-  await renderProjectList();
-  renderChatThread();
-  if (!settings.apiKey) setStatus('Open Settings to add your API key.', '');
 }
 init();
 </script>
