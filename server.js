@@ -2,6 +2,9 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
+process.on("uncaughtException", (e) => console.error("uncaught:", e.message));
+process.on("unhandledRejection", (e) => console.error("unhandled:", e?.message || e));
+
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
 
@@ -51,6 +54,8 @@ function readBody(req) {
 }
 
 async function handleChatProxy(req, res) {
+  let upstreamReader = null;
+  let keepAlive = null;
   try {
     const body = JSON.parse(await readBody(req));
     const { endpoint, apiKey, model, messages, temperature } = body;
@@ -76,25 +81,33 @@ async function handleChatProxy(req, res) {
     }
     res.writeHead(200, {
       "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
+      "Cache-Control": "no-cache, no-transform",
+      "X-Accel-Buffering": "no",
       "Connection": "keep-alive",
     });
-    const reader = upstream.body.getReader();
-    const decoder = new TextDecoder();
-    try {
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done) break;
-        res.write(value);
+    upstreamReader = upstream.body.getReader();
+    keepAlive = setInterval(() => {
+      if (!res.writableEnded) {
+        res.write(": keep-alive\n\n");
       }
-    } finally {
-      res.end();
+    }, 5000);
+    while (true) {
+      const { done, value } = await upstreamReader.read();
+      if (done) break;
+      if (!res.writableEnded) res.write(value);
     }
   } catch (e) {
+    console.error("proxy error:", e.message);
     if (!res.headersSent) {
       res.writeHead(502, { "Content-Type": "application/json" });
+      res.end(JSON.stringify({ error: { message: "Proxy error: " + e.message } }));
     }
-    res.end(JSON.stringify({ error: "Proxy error: " + e.message }));
+  } finally {
+    if (keepAlive) clearInterval(keepAlive);
+    if (upstreamReader) {
+      try { await upstreamReader.cancel(); } catch {}
+    }
+    if (!res.writableEnded) res.end();
   }
 }
 
