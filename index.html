@@ -414,15 +414,15 @@ import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
 import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
 
 const HELPER_LIB = `
-const _bbox = (o) => new THREE.Box3().setFromObject(o);
-const _center = (o) => _bbox(o).getCenter(new THREE.Vector3());
-const _size = (o) => _bbox(o).getSize(new THREE.Vector3());
+function bbox(o) { return new THREE.Box3().setFromObject(o); }
+function center(o) { return bbox(o).getCenter(new THREE.Vector3()); }
+function size(o) { return bbox(o).getSize(new THREE.Vector3()); }
 
 function placeOn(child, parent, face, opts) {
   opts = opts || {};
   var gap = opts.gap || 0;
-  var pBox = _bbox(parent);
-  var cBox = _bbox(child);
+  var pBox = bbox(parent);
+  var cBox = bbox(child);
   var pC = pBox.getCenter(new THREE.Vector3());
   var cC = cBox.getCenter(new THREE.Vector3());
   var move = pC.clone().sub(cC);
@@ -451,8 +451,8 @@ function nestle(child, parent, face, depth) {
 
 function align(child, parent, axes) {
   axes = axes || 'xyz';
-  var pC = _center(parent);
-  var cC = _center(child);
+  var pC = center(parent);
+  var cC = center(child);
   var d = pC.clone().sub(cC);
   if (axes.indexOf('x') >= 0) child.position.x += d.x;
   if (axes.indexOf('y') >= 0) child.position.y += d.y;
