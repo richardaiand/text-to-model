@@ -321,7 +321,7 @@
     <input id="model" placeholder="gpt-4o-mini" />
     <label for="apiKey">API key</label>
     <input id="apiKey" type="password" placeholder="sk-..." autocomplete="off" />
-    <div class="help">Tip: use <code>https://api.aiand.com/v1</code> with model <code>zai-org/glm-5.2</code> for AIand, or <code>http://localhost:11434/v1</code> for local Ollama.</div>
+    <div class="help">Tip: use <code>https://api.aiand.com/v1</code> with model <code>deepseek-ai/deepseek-v4-flash</code> for AIand, or <code>http://localhost:11434/v1</code> for local Ollama.</div>
     <div class="dlg-actions">
       <button class="ghost" id="cancelSettings">Cancel</button>
       <button class="primary" id="saveSettings">Save</button>
@@ -370,7 +370,7 @@ function buildModel(THREE) {
 \`\`\``;
 
 const PRESETS = [
-  { name: 'AIand', endpoint: 'https://api.aiand.com/v1', model: 'zai-org/glm-5.2' },
+  { name: 'AIand', endpoint: 'https://api.aiand.com/v1', model: 'deepseek-ai/deepseek-v4-flash' },
   { name: 'OpenAI', endpoint: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
   { name: 'Z.AI GLM', endpoint: 'https://api.z.ai/api/paas/v4', model: 'glm-4.6' },
   { name: 'OpenRouter', endpoint: 'https://openrouter.ai/api/v1', model: 'openai/gpt-4o-mini' },
