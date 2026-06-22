@@ -66,13 +66,34 @@ async function handleChatProxy(req, res) {
         "Content-Type": "application/json",
         Authorization: "Bearer " + apiKey,
       },
-      body: JSON.stringify({ model, messages, temperature: temperature ?? 0.7 }),
+      body: JSON.stringify({ model, messages, temperature: temperature ?? 0.7, stream: true }),
     });
-    const text = await upstream.text();
-    res.writeHead(upstream.status, { "Content-Type": "application/json" });
-    res.end(text);
+    if (!upstream.ok || !upstream.body) {
+      const text = await upstream.text().catch(() => "");
+      res.writeHead(upstream.status, { "Content-Type": "application/json" });
+      res.end(text);
+      return;
+    }
+    res.writeHead(200, {
+      "Content-Type": "text/event-stream",
+      "Cache-Control": "no-cache",
+      "Connection": "keep-alive",
+    });
+    const reader = upstream.body.getReader();
+    const decoder = new TextDecoder();
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        res.write(value);
+      }
+    } finally {
+      res.end();
+    }
   } catch (e) {
-    res.writeHead(502, { "Content-Type": "application/json" });
+    if (!res.headersSent) {
+      res.writeHead(502, { "Content-Type": "application/json" });
+    }
     res.end(JSON.stringify({ error: "Proxy error: " + e.message }));
   }
 }

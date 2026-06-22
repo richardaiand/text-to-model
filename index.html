@@ -547,11 +547,31 @@ async function callAgent(userPrompt) {
     const t = await res.text().catch(() => '');
     throw new Error(`API ${res.status}: ${t.slice(0, 300)}`);
   }
-  const data = await res.json();
-  const msg = data.choices?.[0]?.message?.content;
-  if (!msg) throw new Error('Empty response from model.');
-  messages.push({ role: 'assistant', content: msg });
-  return msg;
+  const reader = res.body.getReader();
+  const decoder = new TextDecoder();
+  let full = '';
+  let buffer = '';
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    buffer += decoder.decode(value, { stream: true });
+    const lines = buffer.split('\n');
+    buffer = lines.pop() || '';
+    for (const line of lines) {
+      const trimmed = line.trim();
+      if (!trimmed.startsWith('data:')) continue;
+      const data = trimmed.slice(5).trim();
+      if (data === '[DONE]') continue;
+      try {
+        const parsed = JSON.parse(data);
+        const delta = parsed.choices?.[0]?.delta?.content;
+        if (delta) full += delta;
+      } catch {}
+    }
+  }
+  if (!full) throw new Error('Empty response from model.');
+  messages.push({ role: 'assistant', content: full });
+  return full;
 }
 
 async function generate() {
