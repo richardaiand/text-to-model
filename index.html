@@ -27,6 +27,8 @@
     --card-hover: #1f2530;
     --stats-bg: rgba(12,15,22,.7);
     --code-color: #c8d3e6;
+    --header-h: 52px;
+    --drawer-w: 240px;
   }
   [data-theme="light"] {
     --bg: #f0f2f5;
@@ -67,6 +69,8 @@
     padding: 10px 16px;
     background: linear-gradient(180deg, var(--bg-2), var(--bg));
     border-bottom: 1px solid var(--border);
+    height: var(--header-h);
+    flex-shrink: 0;
   }
   .brand {
     display: flex;
@@ -116,31 +120,197 @@
   button.primary:hover { filter: brightness(1.05); }
   button.primary:disabled { opacity: .5; cursor: not-allowed; }
   button.ghost { background: transparent; }
+  button.sm { font-size: 12px; padding: 6px 10px; }
+
   main {
     flex: 1;
-    display: grid;
-    grid-template-columns: 340px 1fr;
+    display: flex;
     min-height: 0;
+    min-width: 0;
   }
-  aside {
+
+  /* Project drawer */
+  .project-drawer {
+    width: var(--drawer-w);
+    flex-shrink: 0;
     background: var(--panel);
     border-right: 1px solid var(--border);
-    padding: 16px;
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    overflow-y: auto;
+    overflow: hidden;
   }
-  aside h2 {
-    margin: 0;
+  .drawer-section {
+    padding: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .drawer-section h2 {
+    margin: 0 0 10px;
     font-size: 13px;
     text-transform: uppercase;
     letter-spacing: 1px;
     color: var(--muted);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .drawer-hint {
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.4;
+  }
+  .account-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 13px;
+  }
+  .account-info b {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .project-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .project-item {
+    font-size: 13px;
+    padding: 8px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    color: var(--text);
+    background: transparent;
+    border: 1px solid transparent;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+  }
+  .project-item:hover { background: var(--panel-2); }
+  .project-item.active {
+    background: var(--panel-2);
+    border-color: var(--accent);
+  }
+  .project-item .actions { display: none; gap: 4px; }
+  .project-item:hover .actions { display: flex; }
+  .project-item .actions button {
+    padding: 2px 6px;
+    font-size: 11px;
+    line-height: 1;
+    background: transparent;
+    border: none;
+  }
+  .project-item .actions button:hover { background: var(--btn-hover); }
+
+  /* Chat panel */
+  .chat-panel {
+    width: 50%;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg);
+    position: relative;
+  }
+  .chat-thread {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .empty-chat {
+    margin: auto;
+    color: var(--muted);
+    font-size: 14px;
+    text-align: center;
+    max-width: 260px;
+    line-height: 1.5;
+  }
+  .chat-row {
+    display: flex;
+    width: 100%;
+  }
+  .chat-row.user { justify-content: flex-end; }
+  .chat-row.ai { justify-content: flex-start; }
+  .chat-bubble {
+    max-width: 90%;
+    padding: 10px 12px;
+    border-radius: 12px;
+    font-size: 14px;
+    line-height: 1.5;
+    word-break: break-word;
+  }
+  .chat-row.user .chat-bubble {
+    background: var(--accent);
+    color: #07101f;
+    border-bottom-right-radius: 4px;
+  }
+  .chat-row.ai .chat-bubble {
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-bottom-left-radius: 4px;
+  }
+  .think-block {
+    margin-bottom: 8px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-2);
+    overflow: hidden;
+  }
+  .think-block summary {
+    padding: 6px 10px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    user-select: none;
+  }
+  .think-body {
+    padding: 8px 10px;
+    font-size: 12px;
+    color: var(--muted);
+    line-height: 1.5;
+    white-space: pre-wrap;
+    border-top: 1px solid var(--border);
+  }
+  .chat-code {
+    margin: 0;
+    padding: 8px 10px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--code-color);
+    max-height: 160px;
+    overflow: auto;
+  }
+  .chat-input-area {
+    border-top: 1px solid var(--border);
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    background: var(--panel);
+  }
+  .chat-input-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-end;
   }
   textarea {
     width: 100%;
-    min-height: 96px;
+    min-height: 52px;
+    max-height: 160px;
     resize: vertical;
     background: var(--bg-2);
     color: var(--text);
@@ -151,110 +321,49 @@
     line-height: 1.4;
   }
   textarea:focus { outline: none; border-color: var(--accent); }
-  .row { display: flex; gap: 8px; }
-  .row > button { flex: 1; }
-  .toggle-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 13px;
+  .input-hint {
+    font-size: 11px;
     color: var(--muted);
-    cursor: pointer;
-    user-select: none;
   }
-  .toggle-row:hover { color: var(--text); }
-  .toggle {
-    position: relative;
-    width: 36px;
-    height: 20px;
-    border-radius: 999px;
-    background: var(--border);
-    transition: background .2s;
-    flex-shrink: 0;
-  }
-  .toggle::after {
-    content: '';
-    position: absolute;
-    top: 2px; left: 2px;
-    width: 16px; height: 16px;
-    border-radius: 50%;
-    background: var(--text);
-    transition: transform .2s;
-  }
-  .toggle-row.on .toggle { background: var(--accent-2); }
-  .toggle-row.on .toggle::after { transform: translateX(16px); }
-  .toggle-row.on { color: var(--text); }
-  .toggle-desc { font-size: 11px; color: var(--muted); margin-top: 2px; }
-  .examples { display: flex; flex-wrap: wrap; gap: 6px; }
-  .chip {
-    font-size: 12px;
-    padding: 5px 9px;
-    border-radius: 999px;
-    background: var(--bg-2);
-    border: 1px solid var(--border);
-    color: var(--muted);
-    cursor: pointer;
-  }
-  .chip:hover { color: var(--text); border-color: var(--accent); }
   .status {
-    font-size: 13px;
-    min-height: 20px;
+    font-size: 12px;
+    min-height: 18px;
     color: var(--muted);
     line-height: 1.4;
     word-break: break-word;
   }
   .status.error { color: var(--bad); }
   .status.ok { color: var(--good); }
-  details {
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--bg-2);
-  }
-  details summary {
-    cursor: pointer;
-    padding: 8px 10px;
-    font-size: 13px;
-    color: var(--muted);
-  }
-  pre {
-    margin: 0;
-    padding: 10px 12px;
-    max-height: 220px;
-    overflow: auto;
-    font-size: 12px;
-    line-height: 1.5;
-    color: var(--code-color);
-    white-space: pre-wrap;
-    word-break: break-word;
-  }
-  .viewport {
+
+  /* Splitter */
+  .splitter {
+    width: 8px;
+    flex-shrink: 0;
+    cursor: col-resize;
+    background: var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
     position: relative;
+    user-select: none;
+  }
+  .splitter::after {
+    content: '';
+    width: 2px;
+    height: 24px;
+    background: var(--muted);
+    border-radius: 1px;
+  }
+  .splitter.dragging::after { background: var(--accent); }
+
+  /* Viewport */
+  .viewport {
+    flex: 1;
     min-width: 0;
+    position: relative;
     background: var(--viewport-bg);
   }
   canvas { display: block; width: 100%; height: 100%; }
-  .hud {
-    position: absolute;
-    left: 12px; right: 12px; bottom: 12px;
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    pointer-events: none;
-    gap: 12px;
-  }
-  .stats {
-    background: var(--stats-bg);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 8px 12px;
-    font-size: 12px;
-    color: var(--muted);
-    backdrop-filter: blur(6px);
-    pointer-events: auto;
-  }
-  .stats b { color: var(--text); }
-  .exports { display: flex; gap: 8px; pointer-events: auto; }
-  .exports button { font-size: 13px; padding: 8px 12px; }
   .empty-hint {
     position: absolute;
     inset: 0;
@@ -288,13 +397,49 @@
     animation: spin .8s linear infinite;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
+  .hud {
+    position: absolute;
+    left: 12px; right: 12px; bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none;
+    gap: 12px;
+  }
+  .stats {
+    background: var(--stats-bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    backdrop-filter: blur(6px);
+    pointer-events: auto;
+  }
+  .stats b { color: var(--text); }
+  .exports { display: flex; gap: 8px; pointer-events: auto; }
+  .exports button { font-size: 13px; padding: 8px 12px; }
+  .filename-input {
+    width: 110px;
+    font-size: 12px;
+    padding: 6px 8px;
+    background: var(--stats-bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    backdrop-filter: blur(6px);
+  }
+  .filename-input:focus { outline: none; border-color: var(--accent); }
+  .theme-btn { font-size: 16px; padding: 6px 10px; line-height: 1; }
+
+  /* Dialogs */
   dialog {
     background: var(--panel);
     color: var(--text);
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 20px;
-    width: min(520px, 92vw);
+    width: min(460px, 92vw);
     max-height: 88vh;
     overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0,0,0,.5);
@@ -345,7 +490,6 @@
   }
   .badge.works { background: rgba(52,211,153,.15); color: var(--good); }
   .badge.fails { background: rgba(248,113,113,.15); color: var(--bad); }
-  .badge.os { background: rgba(110,168,255,.12); color: var(--accent); }
   .badge.tag-fastest { background: rgba(52,211,153,.18); color: var(--good); }
   .badge.tag-quality { background: rgba(139,92,246,.18); color: var(--accent-2); }
   .badge.tag-balanced { background: rgba(110,168,255,.18); color: var(--accent); }
@@ -353,76 +497,45 @@
   .section-label { font-size: 12px; color: var(--muted); margin: 14px 0 4px; text-transform: uppercase; letter-spacing: 1px; }
   .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
   .help { font-size: 11px; color: var(--muted); margin-top: 4px; }
-  .ai-notes {
-    font-size: 13px;
-    line-height: 1.5;
-    color: var(--text);
-    background: var(--bg-2);
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 10px 12px;
-    display: none;
-  }
-  .ai-notes.show { display: block; }
-  .ai-notes-label {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    color: var(--accent);
-    margin-bottom: 4px;
-    font-weight: 600;
-  }
-  .chat-history {
+  .error-text { color: var(--bad); font-size: 12px; margin-top: 4px; min-height: 18px; }
+
+  .toggle-row {
     display: flex;
-    flex-direction: column;
+    align-items: center;
     gap: 8px;
-    max-height: 240px;
-    overflow-y: auto;
-    display: none;
-  }
-  .chat-history.show { display: flex; }
-  .chat-msg {
-    font-size: 12px;
-    line-height: 1.4;
-    padding: 8px 10px;
-    border-radius: 8px;
-    word-break: break-word;
-  }
-  .chat-msg.user {
-    background: var(--panel-2);
-    border-left: 3px solid var(--accent);
-  }
-  .chat-msg.ai {
-    background: var(--bg-2);
-    border-left: 3px solid var(--accent-2);
-  }
-  .chat-msg-role {
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: .5px;
+    font-size: 13px;
     color: var(--muted);
-    margin-bottom: 2px;
-    font-weight: 600;
+    cursor: pointer;
+    user-select: none;
+    margin-top: 10px;
   }
-  .filename-input {
-    width: 110px;
-    font-size: 12px;
-    padding: 6px 8px;
-    background: var(--stats-bg);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    color: var(--text);
-    backdrop-filter: blur(6px);
+  .toggle-row:hover { color: var(--text); }
+  .toggle {
+    position: relative;
+    width: 36px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--border);
+    transition: background .2s;
+    flex-shrink: 0;
   }
-  .filename-input:focus { outline: none; border-color: var(--accent); }
-  .theme-btn {
-    font-size: 16px;
-    padding: 6px 10px;
-    line-height: 1;
+  .toggle::after {
+    content: '';
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 16px; height: 16px;
+    border-radius: 50%;
+    background: var(--text);
+    transition: transform .2s;
   }
+  .toggle-row.on .toggle { background: var(--accent-2); }
+  .toggle-row.on .toggle::after { transform: translateX(16px); }
+  .toggle-row.on { color: var(--text); }
+
   @media (max-width: 760px) {
-    main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
-    aside { max-height: 42vh; border-right: none; border-bottom: 1px solid var(--border); }
+    .project-drawer { display: none; }
+    .chat-panel { width: 100% !important; }
+    .splitter, .viewport { display: none !important; }
   }
 </style>
 <script type="importmap">
@@ -444,35 +557,37 @@
     <div class="pill" id="modelPill" title="Active model">no model set</div>
     <button class="ghost theme-btn" id="themeBtn" title="Toggle light/dark">🌙</button>
     <button class="ghost" id="settingsBtn">Settings</button>
+    <div id="accountSection"></div>
   </header>
 
-  <main>
-    <aside>
-      <h2>Describe your model</h2>
-      <textarea id="prompt" placeholder="e.g. a glossy red apple with a small brown stem and a green leaf"></textarea>
-      <div class="examples" id="examples"></div>
-      <div class="toggle-row" id="deepThinkToggle">
-        <div class="toggle"></div>
-        <span>Deep Think</span>
+  <main id="mainArea">
+    <aside class="project-drawer" id="projectDrawer">
+      <div class="drawer-section" id="accountDrawer"></div>
+      <div class="drawer-section">
+        <h2>Projects <button class="sm primary" id="newProjectBtn">+ New</button></h2>
       </div>
-      <div class="toggle-desc" id="deepThinkDesc">AI plans carefully before coding. Better results, uses more of the 30s limit.</div>
-      <div class="row">
-        <button class="primary" id="generateBtn">Generate</button>
-        <button class="ghost" id="clearBtn">New</button>
+      <div class="project-list" id="projectList">
+        <div class="drawer-hint">Sign in to save and manage projects.</div>
       </div>
-      <div class="status" id="status"></div>
-      <div class="ai-notes" id="aiNotes">
-        <div class="ai-notes-label">AI's Plan</div>
-        <div id="aiNotesText"></div>
-      </div>
-      <div class="chat-history" id="chatHistory"></div>
-      <details>
-        <summary>Generated code (agent output)</summary>
-        <pre id="codeView">No code yet.</pre>
-      </details>
     </aside>
 
-    <section class="viewport">
+    <section class="chat-panel" id="chatPanel">
+      <div class="chat-thread" id="chatThread">
+        <div class="empty-chat">Sign in to save projects, or start typing below to generate a 3D model.</div>
+      </div>
+      <div class="chat-input-area">
+        <div class="status" id="status"></div>
+        <textarea id="prompt" placeholder="Describe your model…"></textarea>
+        <div class="chat-input-row">
+          <span class="input-hint">Enter to send · Shift+Enter for new line</span>
+          <button class="primary" id="generateBtn">Generate</button>
+        </div>
+      </div>
+    </section>
+
+    <div class="splitter" id="splitter"></div>
+
+    <section class="viewport" id="viewportPanel">
       <canvas id="c"></canvas>
       <div class="empty-hint" id="emptyHint">Enter a prompt and hit Generate to create a 3D model you can orbit and export.</div>
       <div class="loader" id="loader">
@@ -490,6 +605,21 @@
       </div>
     </section>
   </main>
+
+  <dialog id="authDlg">
+    <h3>Account</h3>
+    <p class="sub">Browser-local accounts. Your password is hashed and stored only in this browser.</p>
+    <label for="authUser">Username</label>
+    <input id="authUser" autocomplete="off" placeholder="username" />
+    <label for="authPass">Password</label>
+    <input id="authPass" type="password" autocomplete="off" placeholder="password" />
+    <div class="error-text" id="authError"></div>
+    <div class="dlg-actions">
+      <button class="ghost" id="authCancel">Cancel</button>
+      <button class="primary" id="authSignUp">Create account</button>
+      <button class="primary" id="authSignIn">Sign in</button>
+    </div>
+  </dialog>
 
   <dialog id="settingsDlg">
     <h3>AI Provider</h3>
@@ -648,21 +778,173 @@ const OTHER_PRESETS = [
   { name: 'Ollama', endpoint: 'http://localhost:11434/v1', model: 'llama3.1' },
 ];
 
-const EXAMPLES = [
-  'a glossy red apple with stem and leaf',
-  'a low-poly pine tree',
-  'a coffee mug with a handle',
-  'a medieval castle tower',
-  'a cute robot head',
-  'a simple house with a pitched roof',
-];
-
 const $ = (id) => document.getElementById(id);
 const ls = {
   get: (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
   set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+  del: (k) => { try { localStorage.removeItem(k); } catch {} },
 };
 
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+/* ---------- IndexedDB accounts & projects ---------- */
+const DB_NAME = 'ai3d_chat';
+const DB_VERSION = 1;
+let dbPromise = null;
+
+function openDB() {
+  if (dbPromise) return dbPromise;
+  dbPromise = new Promise((resolve, reject) => {
+    const req = indexedDB.open(DB_NAME, DB_VERSION);
+    req.onerror = () => reject(req.error);
+    req.onsuccess = () => resolve(req.result);
+    req.onupgradeneeded = (e) => {
+      const db = e.target.result;
+      if (!db.objectStoreNames.contains('accounts')) {
+        db.createObjectStore('accounts', { keyPath: 'username' });
+      }
+      if (!db.objectStoreNames.contains('projects')) {
+        const ps = db.createObjectStore('projects', { keyPath: 'id', autoIncrement: true });
+        ps.createIndex('accountId', 'accountId', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('messages')) {
+        const ms = db.createObjectStore('messages', { keyPath: 'id', autoIncrement: true });
+        ms.createIndex('projectId', 'projectId', { unique: false });
+      }
+      if (!db.objectStoreNames.contains('settings')) {
+        db.createObjectStore('settings', { keyPath: 'accountId' });
+      }
+    };
+  });
+  return dbPromise;
+}
+
+async function dbRequest(storeName, mode, operation) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(storeName, mode);
+    const store = tx.objectStore(storeName);
+    const req = operation(store);
+    req.onsuccess = () => resolve(req.result);
+    req.onerror = () => reject(req.error);
+    tx.onerror = () => reject(tx.error);
+  });
+}
+
+async function hashPassword(password) {
+  const enc = new TextEncoder().encode(password);
+  const buf = await crypto.subtle.digest('SHA-256', enc);
+  return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+async function createAccount(username, password) {
+  const existing = await dbRequest('accounts', 'readonly', store => store.get(username));
+  if (existing) throw new Error('Username already exists.');
+  const account = { username, passwordHash: await hashPassword(password), createdAt: Date.now() };
+  await dbRequest('accounts', 'readwrite', store => store.put(account));
+  return account;
+}
+
+async function verifyAccount(username, password) {
+  const account = await dbRequest('accounts', 'readonly', store => store.get(username));
+  if (!account) throw new Error('Account not found.');
+  const hash = await hashPassword(password);
+  if (hash !== account.passwordHash) throw new Error('Incorrect password.');
+  return account;
+}
+
+async function getProjects(accountId) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('projects', 'readonly');
+    const store = tx.objectStore('projects');
+    const idx = store.index('accountId');
+    const req = idx.openCursor(accountId);
+    const list = [];
+    req.onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) { list.push(cursor.value); cursor.continue(); }
+      else resolve(list.sort((a, b) => b.updatedAt - a.updatedAt));
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveProject(project) {
+  project.updatedAt = Date.now();
+  const id = await dbRequest('projects', 'readwrite', store => store.put(project));
+  if (!project.id) project.id = id;
+  return project;
+}
+
+async function deleteProject(id) {
+  await dbRequest('projects', 'readwrite', store => store.delete(id));
+  const db = await openDB();
+  const tx = db.transaction('messages', 'readwrite');
+  const store = tx.objectStore('messages');
+  const idx = store.index('projectId');
+  return new Promise((resolve, reject) => {
+    const req = idx.openCursor(id);
+    req.onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) { cursor.delete(); cursor.continue(); }
+      else resolve();
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function getMessages(projectId) {
+  const db = await openDB();
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction('messages', 'readonly');
+    const store = tx.objectStore('messages');
+    const idx = store.index('projectId');
+    const req = idx.openCursor(projectId);
+    const list = [];
+    req.onsuccess = (e) => {
+      const cursor = e.target.result;
+      if (cursor) { list.push(cursor.value); cursor.continue(); }
+      else resolve(list.sort((a, b) => a.createdAt - b.createdAt));
+    };
+    req.onerror = () => reject(req.error);
+  });
+}
+
+async function saveMessage(msg) {
+  msg.updatedAt = Date.now();
+  const id = await dbRequest('messages', 'readwrite', store => store.put(msg));
+  if (!msg.id) msg.id = id;
+  return msg;
+}
+
+async function loadAccountSettings() {
+  if (!currentAccount) return;
+  const s = await dbRequest('settings', 'readonly', store => store.get(currentAccount.username));
+  if (s) {
+    if (s.endpoint) settings.endpoint = s.endpoint;
+    if (s.model) settings.model = s.model;
+    if (s.apiKey) settings.apiKey = s.apiKey;
+    if (s.theme) lightTheme = s.theme === 'light';
+    if (typeof s.deepThink === 'boolean') deepThink = s.deepThink;
+  }
+}
+
+async function saveAccountSettings() {
+  if (!currentAccount) return;
+  await dbRequest('settings', 'readwrite', store => store.put({
+    accountId: currentAccount.username,
+    endpoint: settings.endpoint,
+    model: settings.model,
+    apiKey: settings.apiKey,
+    theme: lightTheme ? 'light' : 'dark',
+    deepThink,
+  }));
+}
+
+/* ---------- App state ---------- */
 const settings = {
   endpoint: ls.get('ai3d.endpoint', AIAND_ENDPOINT),
   model: ls.get('ai3d.model', 'deepseek-ai/deepseek-v4-flash'),
@@ -671,6 +953,9 @@ const settings = {
 
 let deepThink = ls.get('ai3d.deepThink', 'false') === 'true';
 let lightTheme = ls.get('ai3d.theme', 'dark') === 'light';
+let currentAccount = null;
+let currentProject = null;
+let messages = [{ role: 'system', content: getSystemPrompt() }];
 
 const DEEP_THINK_SUFFIX = `
 
@@ -688,8 +973,7 @@ function getSystemPrompt() {
   return deepThink ? SYSTEM_PROMPT + DEEP_THINK_SUFFIX : SYSTEM_PROMPT;
 }
 
-let messages = [{ role: 'system', content: getSystemPrompt() }];
-
+/* ---------- Three.js scene ---------- */
 const renderer = new THREE.WebGLRenderer({ canvas: $('c'), antialias: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -820,7 +1104,6 @@ function parseResponse(text) {
 }
 
 function runModelCode(code) {
-  $('codeView').textContent = code;
   const runner = new Function(
     'THREE',
     HELPER_LIB + '\n' + code + '\n;if(typeof buildModel==="function")return buildModel(THREE);if(typeof buildModel!=="undefined")return buildModel;throw new Error("buildModel is not defined in the generated code");'
@@ -921,20 +1204,32 @@ async function generate() {
   const abort = new AbortController();
   currentAbort = abort;
   const myGen = ++genId;
+
+  if (!currentProject && currentAccount) {
+    currentProject = await saveProject({ accountId: currentAccount.username, title: prompt.slice(0, 40) });
+    await renderProjectList();
+  }
+
   try {
     const raw = await callAgent(prompt, abort.signal);
     const { code, plan } = parseResponse(raw);
-    if (plan) {
-      $('aiNotesText').textContent = plan;
-      $('aiNotes').classList.add('show');
+
+    if (currentProject && currentAccount) {
+      const userMsg = { projectId: currentProject.id, role: 'user', content: prompt, createdAt: Date.now() };
+      const aiMsg = { projectId: currentProject.id, role: 'assistant', content: raw, plan, code, createdAt: Date.now() + 1 };
+      await Promise.all([saveMessage(userMsg), saveMessage(aiMsg)]);
+      currentProject.title = currentProject.title || prompt.slice(0, 40);
+      await saveProject(currentProject);
+      await renderProjectList();
     }
-    renderChatHistory();
+
+    renderChatThread();
     runModelCode(code);
     setStatus('Model ready. Orbit to inspect, then export.', 'ok');
+    $('prompt').value = '';
   } catch (e) {
     if (messages[messages.length - 1]?.role === 'user') messages.pop();
     setStatus(e.message, 'error');
-    $('codeView').textContent = '(generation failed)';
   } finally {
     if (currentAbort === abort) currentAbort = null;
     if (genId === myGen) {
@@ -982,19 +1277,51 @@ async function exportModel(format) {
   }
 }
 
-function newModel() {
+async function newProject() {
   if (currentModel) { scene.remove(currentModel); disposeObject(currentModel); currentModel = null; }
   messages = [{ role: 'system', content: getSystemPrompt() }];
   $('prompt').value = '';
-  $('codeView').textContent = 'No code yet.';
   $('stats').textContent = 'No model';
   $('emptyHint').style.display = '';
-  $('aiNotes').classList.remove('show');
-  $('aiNotesText').textContent = '';
-  $('chatHistory').classList.remove('show');
-  $('chatHistory').innerHTML = '';
   document.querySelectorAll('.exports button').forEach((b) => (b.disabled = true));
   setStatus('');
+
+  if (currentAccount) {
+    currentProject = await saveProject({ accountId: currentAccount.username, title: 'New Project' });
+    await renderProjectList();
+  } else {
+    currentProject = null;
+  }
+  renderChatThread();
+}
+
+async function loadProject(project) {
+  currentProject = project;
+  await renderProjectList();
+  if (currentModel) { scene.remove(currentModel); disposeObject(currentModel); currentModel = null; }
+  messages = [{ role: 'system', content: getSystemPrompt() }];
+  $('prompt').value = '';
+  $('stats').textContent = 'No model';
+  $('emptyHint').style.display = '';
+  document.querySelectorAll('.exports button').forEach((b) => (b.disabled = true));
+  setStatus('');
+
+  if (!project) {
+    renderChatThread();
+    return;
+  }
+
+  const stored = await getMessages(project.id);
+  stored.forEach((m) => {
+    messages.push({ role: m.role, content: m.content });
+  });
+  renderChatThread();
+
+  const lastCode = stored.filter(m => m.role === 'assistant' && m.code).pop()?.code;
+  if (lastCode) {
+    try { runModelCode(lastCode); }
+    catch (e) { setStatus('Could not rebuild model: ' + e.message, 'error'); }
+  }
 }
 
 function openSettings() {
@@ -1010,6 +1337,7 @@ function saveSettings() {
   ls.set('ai3d.endpoint', settings.endpoint);
   ls.set('ai3d.model', settings.model);
   ls.set('ai3d.apiKey', settings.apiKey);
+  saveAccountSettings();
   updateModelPill();
   $('settingsDlg').close();
 }
@@ -1018,29 +1346,14 @@ function updateModelPill() {
   $('modelPill').textContent = settings.model ? `model: ${settings.model}` : 'no model set';
 }
 
-function buildExampleChips() {
-  const wrap = $('examples');
-  EXAMPLES.forEach((ex) => {
-    const b = document.createElement('button');
-    b.className = 'chip';
-    b.textContent = ex;
-    b.addEventListener('click', () => { $('prompt').value = ex; $('prompt').focus(); });
-    wrap.appendChild(b);
-  });
-}
 function buildModelList() {
-  const TAG_LABELS = {
-    fastest: 'Fastest',
-    quality: 'Best Quality',
-    balanced: 'Balanced',
-  };
+  const TAG_LABELS = { fastest: 'Fastest', quality: 'Best Quality', balanced: 'Balanced' };
   const wrap = $('modelList');
+  wrap.innerHTML = '';
   AIAND_MODELS.forEach((m) => {
     const card = document.createElement('div');
     card.className = 'model-card' + (m.works ? '' : ' disabled');
-    if (settings.endpoint === AIAND_ENDPOINT && settings.model === m.id) {
-      card.classList.add('selected');
-    }
+    if (settings.endpoint === AIAND_ENDPOINT && settings.model === m.id) card.classList.add('selected');
     const info = document.createElement('div');
     info.className = 'model-info';
     const name = document.createElement('div');
@@ -1080,6 +1393,7 @@ function buildModelList() {
 }
 function buildPresets() {
   const wrap = $('presets');
+  wrap.innerHTML = '';
   OTHER_PRESETS.forEach((p) => {
     const b = document.createElement('button');
     b.textContent = p.name;
@@ -1092,34 +1406,244 @@ function buildPresets() {
   });
 }
 
-function renderChatHistory() {
-  const wrap = $('chatHistory');
-  wrap.innerHTML = '';
+function renderChatThread() {
+  const thread = $('chatThread');
+  thread.innerHTML = '';
   const convo = messages.filter((m) => m.role !== 'system');
-  if (convo.length === 0) return;
+  if (convo.length === 0) {
+    thread.innerHTML = '<div class="empty-chat">Describe the 3D model you want to build, then hit Generate.</div>';
+    return;
+  }
   convo.forEach((m) => {
-    const div = document.createElement('div');
-    div.className = 'chat-msg ' + (m.role === 'user' ? 'user' : 'ai');
-    const role = document.createElement('div');
-    role.className = 'chat-msg-role';
-    role.textContent = m.role === 'user' ? 'You' : 'AI';
-    const text = document.createElement('div');
-    let display = m.content;
-    if (m.role === 'assistant') {
-      const { plan } = parseResponse(m.content);
-      display = plan || '(generated code)';
+    const row = document.createElement('div');
+    row.className = 'chat-row ' + (m.role === 'user' ? 'user' : 'ai');
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble';
+    if (m.role === 'user') {
+      bubble.textContent = m.content;
+    } else {
+      const parsed = parseResponse(m.content);
+      const plan = parsed.plan;
+      const code = parsed.code;
+      if (plan) {
+        const details = document.createElement('details');
+        details.className = 'think-block';
+        details.open = true;
+        const summary = document.createElement('summary');
+        summary.textContent = 'Thinking';
+        const body = document.createElement('div');
+        body.className = 'think-body';
+        body.textContent = plan;
+        details.appendChild(summary);
+        details.appendChild(body);
+        bubble.appendChild(details);
+      }
+      const pre = document.createElement('pre');
+      pre.className = 'chat-code';
+      pre.textContent = code.slice(0, 500) + (code.length > 500 ? '\n...' : '');
+      bubble.appendChild(pre);
     }
-    text.textContent = display;
-    div.appendChild(role);
-    div.appendChild(text);
-    wrap.appendChild(div);
+    row.appendChild(bubble);
+    thread.appendChild(row);
   });
-  wrap.classList.add('show');
-  wrap.scrollTop = wrap.scrollHeight;
+  thread.scrollTop = thread.scrollHeight;
 }
 
+/* ---------- Accounts UI ---------- */
+function updateAccountUI() {
+  const section = $('accountSection');
+  if (currentAccount) {
+    section.innerHTML = `<button class="ghost sm" id="signOutBtn">Sign out</button>`;
+    $('signOutBtn').addEventListener('click', signOut);
+  } else {
+    section.innerHTML = `<button class="primary sm" id="signInBtn">Sign in</button>`;
+    $('signInBtn').addEventListener('click', openAuthDialog);
+  }
+  updateAccountDrawer();
+}
+
+function updateAccountDrawer() {
+  const el = $('accountDrawer');
+  if (currentAccount) {
+    el.innerHTML = `
+      <h2>Account</h2>
+      <div class="account-info">
+        <b>${escapeHtml(currentAccount.username)}</b>
+      </div>
+      <div class="drawer-hint" style="margin-top:6px">Signed in locally. Data stays in this browser.</div>
+    `;
+  } else {
+    el.innerHTML = `
+      <h2>Account</h2>
+      <div class="drawer-hint">Sign in to save multiple projects and continue later.</div>
+      <button class="primary sm" id="drawerSignInBtn" style="margin-top:8px;width:100%">Sign in / Create account</button>
+    `;
+    $('drawerSignInBtn').addEventListener('click', openAuthDialog);
+  }
+}
+
+function openAuthDialog() {
+  $('authUser').value = '';
+  $('authPass').value = '';
+  $('authError').textContent = '';
+  $('authDlg').showModal();
+}
+function closeAuthDialog() {
+  $('authDlg').close();
+}
+
+async function handleSignIn() {
+  $('authError').textContent = '';
+  const username = $('authUser').value.trim();
+  const password = $('authPass').value;
+  if (!username || !password) { $('authError').textContent = 'Enter username and password.'; return; }
+  try {
+    currentAccount = await verifyAccount(username, password);
+    ls.set('ai3d.currentAccount', username);
+    await loadAccountSettings();
+    applyTheme();
+    syncDeepThink(false);
+    updateAccountUI();
+    closeAuthDialog();
+    const projects = await getProjects(currentAccount.username);
+    if (projects.length) await loadProject(projects[0]);
+    else await loadProject(null);
+    await renderProjectList();
+    setStatus(`Welcome back, ${username}.`, 'ok');
+  } catch (e) {
+    $('authError').textContent = e.message;
+  }
+}
+
+async function handleSignUp() {
+  $('authError').textContent = '';
+  const username = $('authUser').value.trim();
+  const password = $('authPass').value;
+  if (!username || !password) { $('authError').textContent = 'Enter username and password.'; return; }
+  if (password.length < 4) { $('authError').textContent = 'Password must be at least 4 characters.'; return; }
+  try {
+    currentAccount = await createAccount(username, password);
+    ls.set('ai3d.currentAccount', username);
+    await saveAccountSettings();
+    updateAccountUI();
+    closeAuthDialog();
+    await loadProject(null);
+    await renderProjectList();
+    setStatus(`Account created. Welcome, ${username}.`, 'ok');
+  } catch (e) {
+    $('authError').textContent = e.message;
+  }
+}
+
+async function signOut() {
+  currentAccount = null;
+  currentProject = null;
+  ls.del('ai3d.currentAccount');
+  updateAccountUI();
+  await renderProjectList();
+  await loadProject(null);
+  setStatus('Signed out.', '');
+}
+
+async function renderProjectList() {
+  const list = $('projectList');
+  list.innerHTML = '';
+  if (!currentAccount) {
+    list.innerHTML = '<div class="drawer-hint">Sign in to save and manage projects.</div>';
+    return;
+  }
+  const projects = await getProjects(currentAccount.username);
+  if (projects.length === 0) {
+    list.innerHTML = '<div class="drawer-hint">No saved projects yet. Start a chat to create one.</div>';
+    return;
+  }
+  projects.forEach((p) => {
+    const item = document.createElement('div');
+    item.className = 'project-item' + (currentProject && currentProject.id === p.id ? ' active' : '');
+    const title = document.createElement('span');
+    title.style.flex = '1';
+    title.style.minWidth = '0';
+    title.style.overflow = 'hidden';
+    title.style.textOverflow = 'ellipsis';
+    title.textContent = p.title || 'Untitled';
+    item.appendChild(title);
+    const actions = document.createElement('span');
+    actions.className = 'actions';
+    const del = document.createElement('button');
+    del.textContent = '×';
+    del.title = 'Delete project';
+    del.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      if (!confirm('Delete this project and its chat history?')) return;
+      await deleteProject(p.id);
+      if (currentProject && currentProject.id === p.id) await loadProject(null);
+      await renderProjectList();
+    });
+    actions.appendChild(del);
+    item.appendChild(actions);
+    item.addEventListener('click', () => loadProject(p));
+    list.appendChild(item);
+  });
+}
+
+/* ---------- Splitter ---------- */
+let chatWidthPct = 50;
+let dragging = false;
+
+function setChatWidth(pct) {
+  chatWidthPct = Math.max(0, Math.min(100, pct));
+  const chat = $('chatPanel');
+  const view = $('viewportPanel');
+  if (chatWidthPct <= 0) {
+    chat.style.display = 'none';
+    view.style.display = 'block';
+    view.style.flex = '1';
+  } else if (chatWidthPct >= 100) {
+    chat.style.display = 'flex';
+    chat.style.width = '100%';
+    view.style.display = 'none';
+  } else {
+    chat.style.display = 'flex';
+    chat.style.width = chatWidthPct + '%';
+    view.style.display = 'block';
+    view.style.flex = '1';
+  }
+  resize();
+}
+
+$('splitter').addEventListener('mousedown', (e) => {
+  dragging = true;
+  $('splitter').classList.add('dragging');
+  document.body.style.cursor = 'col-resize';
+  e.preventDefault();
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!dragging) return;
+  const main = $('mainArea').getBoundingClientRect();
+  const drawerW = $('projectDrawer').offsetWidth;
+  const splitterW = $('splitter').offsetWidth;
+  const avail = main.width - drawerW - splitterW;
+  const x = e.clientX - main.left - drawerW;
+  let pct = (x / avail) * 100;
+  const snaps = [0, 50, 100];
+  for (const s of snaps) {
+    if (Math.abs(pct - s) < 6) { pct = s; break; }
+  }
+  setChatWidth(pct);
+});
+
+document.addEventListener('mouseup', () => {
+  if (dragging) {
+    dragging = false;
+    $('splitter').classList.remove('dragging');
+    document.body.style.cursor = '';
+  }
+});
+
+/* ---------- Event wiring ---------- */
 $('generateBtn').addEventListener('click', generate);
-$('clearBtn').addEventListener('click', newModel);
+$('newProjectBtn').addEventListener('click', newProject);
 $('settingsBtn').addEventListener('click', openSettings);
 $('saveSettings').addEventListener('click', saveSettings);
 $('cancelSettings').addEventListener('click', () => $('settingsDlg').close());
@@ -1127,28 +1651,66 @@ document.querySelectorAll('.exports button').forEach((b) =>
   b.addEventListener('click', () => exportModel(b.dataset.export))
 );
 $('prompt').addEventListener('keydown', (e) => {
-  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generate();
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    generate();
+  }
 });
 $('themeBtn').addEventListener('click', () => {
   lightTheme = !lightTheme;
   ls.set('ai3d.theme', lightTheme ? 'light' : 'dark');
   applyTheme();
+  saveAccountSettings();
 });
 
-const deepThinkEl = $('deepThinkToggle');
-function syncDeepThink() {
+const deepThinkEl = document.createElement('div');
+deepThinkEl.className = 'toggle-row' + (deepThink ? ' on' : '');
+deepThinkEl.id = 'deepThinkToggle';
+deepThinkEl.innerHTML = '<div class="toggle"></div><span>Deep Think</span>';
+$('settingsDlg').querySelector('.dlg-actions').before(deepThinkEl);
+function syncDeepThink(save = true) {
   deepThinkEl.classList.toggle('on', deepThink);
   ls.set('ai3d.deepThink', String(deepThink));
   messages = [{ role: 'system', content: getSystemPrompt() }];
+  if (save) saveAccountSettings();
 }
 deepThinkEl.addEventListener('click', () => { deepThink = !deepThink; syncDeepThink(); });
-syncDeepThink();
 
-buildExampleChips();
-buildModelList();
-buildPresets();
-updateModelPill();
-if (!settings.apiKey) setStatus('Open Settings to add your API key.', '');
+$('authSignIn').addEventListener('click', handleSignIn);
+$('authSignUp').addEventListener('click', handleSignUp);
+$('authCancel').addEventListener('click', closeAuthDialog);
+
+/* ---------- Init ---------- */
+async function init() {
+  buildModelList();
+  buildPresets();
+  updateModelPill();
+  setChatWidth(50);
+
+  const savedAccount = ls.get('ai3d.currentAccount', '');
+  if (savedAccount) {
+    try {
+      currentAccount = await dbRequest('accounts', 'readonly', store => store.get(savedAccount));
+      if (currentAccount) {
+        await loadAccountSettings();
+        applyTheme();
+        syncDeepThink(false);
+        const projects = await getProjects(currentAccount.username);
+        if (projects.length) await loadProject(projects[0]);
+      } else {
+        ls.del('ai3d.currentAccount');
+      }
+    } catch (e) {
+      console.error('account load error', e);
+      ls.del('ai3d.currentAccount');
+    }
+  }
+  updateAccountUI();
+  await renderProjectList();
+  renderChatThread();
+  if (!settings.apiKey) setStatus('Open Settings to add your API key.', '');
+}
+init();
 </script>
 </body>
 </html>
