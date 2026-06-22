@@ -231,7 +231,9 @@
     border: 1px solid var(--border);
     border-radius: 14px;
     padding: 20px;
-    width: min(460px, 92vw);
+    width: min(520px, 92vw);
+    max-height: 88vh;
+    overflow-y: auto;
     box-shadow: 0 20px 60px rgba(0,0,0,.5);
   }
   dialog::backdrop { background: rgba(0,0,0,.6); }
@@ -250,6 +252,38 @@
   input:focus, select:focus { outline: none; border-color: var(--accent); }
   .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
   .presets button { font-size: 12px; padding: 6px 10px; }
+  .model-list { display: flex; flex-direction: column; gap: 6px; margin-top: 4px; }
+  .model-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-2);
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+  }
+  .model-card:hover { border-color: var(--accent); background: #1f2530; }
+  .model-card.selected { border-color: var(--accent); background: #1f2530; }
+  .model-card.disabled { opacity: .5; cursor: not-allowed; }
+  .model-card.disabled:hover { border-color: var(--border); background: var(--bg-2); }
+  .model-info { flex: 1; min-width: 0; }
+  .model-name { font-size: 13px; font-weight: 600; }
+  .model-desc { font-size: 11px; color: var(--muted); }
+  .badge {
+    font-size: 10px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 999px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    white-space: nowrap;
+  }
+  .badge.works { background: rgba(52,211,153,.15); color: var(--good); }
+  .badge.fails { background: rgba(248,113,113,.15); color: var(--bad); }
+  .badge.os { background: rgba(110,168,255,.12); color: var(--accent); }
+  .section-label { font-size: 12px; color: var(--muted); margin: 14px 0 4px; text-transform: uppercase; letter-spacing: 1px; }
   .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
   .help { font-size: 11px; color: var(--muted); margin-top: 4px; }
   @media (max-width: 760px) {
@@ -313,15 +347,18 @@
 
   <dialog id="settingsDlg">
     <h3>AI Provider</h3>
-    <p class="sub">Any OpenAI-compatible endpoint works. Your key is stored only in this browser (localStorage).</p>
+    <p class="sub">Your key is stored only in this browser (localStorage). Models marked "Times out" exceed the 30s server limit.</p>
+    <div class="section-label">AIand Models (open-source)</div>
+    <div class="model-list" id="modelList"></div>
+    <div class="section-label">Other Providers</div>
     <div class="presets" id="presets"></div>
     <label for="endpoint">Endpoint base URL</label>
     <input id="endpoint" placeholder="https://api.openai.com/v1" />
     <label for="model">Model</label>
-    <input id="model" placeholder="gpt-4o-mini" />
+    <input id="model" placeholder="deepseek-ai/deepseek-v4-flash" />
     <label for="apiKey">API key</label>
     <input id="apiKey" type="password" placeholder="sk-..." autocomplete="off" />
-    <div class="help">Tip: use <code>https://api.aiand.com/v1</code> with model <code>deepseek-ai/deepseek-v4-flash</code> for AIand, or <code>http://localhost:11434/v1</code> for local Ollama.</div>
+    <div class="help">ChatGPT Plus subscription is separate from API access. To use OpenAI, get a pay-per-token key from platform.openai.com. For local models, use <code>http://localhost:11434/v1</code> (Ollama).</div>
     <div class="dlg-actions">
       <button class="ghost" id="cancelSettings">Cancel</button>
       <button class="primary" id="saveSettings">Save</button>
@@ -369,8 +406,21 @@ function buildModel(THREE) {
 }
 \`\`\``;
 
-const PRESETS = [
-  { name: 'AIand', endpoint: 'https://api.aiand.com/v1', model: 'deepseek-ai/deepseek-v4-flash' },
+const AIAND_ENDPOINT = 'https://api.aiand.com/v1';
+
+const AIAND_MODELS = [
+  { id: 'deepseek-ai/deepseek-v4-flash', name: 'DeepSeek v4 Flash', works: true,  desc: 'Fastest · ~5s',          openSource: true },
+  { id: 'deepseek-ai/deepseek-v4-pro',   name: 'DeepSeek v4 Pro',   works: true,  desc: 'Higher quality · ~6s',  openSource: true },
+  { id: 'openai/gpt-oss-120b',           name: 'GPT-OSS 120B',      works: true,  desc: 'OpenAI open-source · ~6s', openSource: true },
+  { id: 'google/gemma-4-31b-it',         name: 'Gemma 4 31B',       works: true,  desc: 'Google · ~14s',          openSource: true },
+  { id: 'zai-org/glm-5.1',              name: 'GLM 5.1',           works: true,  desc: 'Z.AI · ~18s',            openSource: true },
+  { id: 'moonshotai/kimi-k2.7-code',    name: 'Kimi K2.7 Code',    works: true,  desc: 'Code-focused · ~21s',   openSource: true },
+  { id: 'moonshotai/kimi-k2.6',         name: 'Kimi K2.6',         works: false, desc: 'Times out (>30s limit)', openSource: true },
+  { id: 'qwen/qwen3.6-27b',             name: 'Qwen 3.6 27B',      works: false, desc: 'Times out (>30s limit)', openSource: true },
+  { id: 'zai-org/glm-5.2',              name: 'GLM 5.2',           works: false, desc: 'Times out (>30s limit)', openSource: true },
+];
+
+const OTHER_PRESETS = [
   { name: 'OpenAI', endpoint: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
   { name: 'Z.AI GLM', endpoint: 'https://api.z.ai/api/paas/v4', model: 'glm-4.6' },
   { name: 'OpenRouter', endpoint: 'https://openrouter.ai/api/v1', model: 'openai/gpt-4o-mini' },
@@ -393,8 +443,8 @@ const ls = {
 };
 
 const settings = {
-  endpoint: ls.get('ai3d.endpoint', 'https://api.openai.com/v1'),
-  model: ls.get('ai3d.model', 'gpt-4o-mini'),
+  endpoint: ls.get('ai3d.endpoint', AIAND_ENDPOINT),
+  model: ls.get('ai3d.model', 'deepseek-ai/deepseek-v4-flash'),
   apiKey: ls.get('ai3d.apiKey', ''),
 };
 
@@ -664,8 +714,8 @@ function openSettings() {
   $('settingsDlg').showModal();
 }
 function saveSettings() {
-  settings.endpoint = $('endpoint').value.trim() || 'https://api.openai.com/v1';
-  settings.model = $('model').value.trim() || 'gpt-4o-mini';
+  settings.endpoint = $('endpoint').value.trim() || AIAND_ENDPOINT;
+  settings.model = $('model').value.trim() || 'deepseek-ai/deepseek-v4-flash';
   settings.apiKey = $('apiKey').value.trim();
   ls.set('ai3d.endpoint', settings.endpoint);
   ls.set('ai3d.model', settings.model);
@@ -688,14 +738,49 @@ function buildExampleChips() {
     wrap.appendChild(b);
   });
 }
+function buildModelList() {
+  const wrap = $('modelList');
+  AIAND_MODELS.forEach((m) => {
+    const card = document.createElement('div');
+    card.className = 'model-card' + (m.works ? '' : ' disabled');
+    if (settings.endpoint === AIAND_ENDPOINT && settings.model === m.id) {
+      card.classList.add('selected');
+    }
+    const info = document.createElement('div');
+    info.className = 'model-info';
+    const name = document.createElement('div');
+    name.className = 'model-name';
+    name.textContent = m.name;
+    const desc = document.createElement('div');
+    desc.className = 'model-desc';
+    desc.textContent = m.desc;
+    info.appendChild(name);
+    info.appendChild(desc);
+    const badge = document.createElement('span');
+    badge.className = 'badge ' + (m.works ? 'works' : 'fails');
+    badge.textContent = m.works ? 'Works' : 'Times out';
+    card.appendChild(info);
+    card.appendChild(badge);
+    if (m.works) {
+      card.addEventListener('click', () => {
+        $('endpoint').value = AIAND_ENDPOINT;
+        $('model').value = m.id;
+        wrap.querySelectorAll('.model-card').forEach((c) => c.classList.remove('selected'));
+        card.classList.add('selected');
+      });
+    }
+    wrap.appendChild(card);
+  });
+}
 function buildPresets() {
   const wrap = $('presets');
-  PRESETS.forEach((p) => {
+  OTHER_PRESETS.forEach((p) => {
     const b = document.createElement('button');
     b.textContent = p.name;
     b.addEventListener('click', () => {
       $('endpoint').value = p.endpoint;
       $('model').value = p.model;
+      document.querySelectorAll('.model-card').forEach((c) => c.classList.remove('selected'));
     });
     wrap.appendChild(b);
   });
@@ -714,6 +799,7 @@ $('prompt').addEventListener('keydown', (e) => {
 });
 
 buildExampleChips();
+buildModelList();
 buildPresets();
 updateModelPill();
 if (!settings.apiKey) setStatus('Open Settings to add your API key.', '');
