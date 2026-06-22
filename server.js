@@ -2,8 +2,8 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
-process.on("uncaughtException", (e) => console.error("uncaught:", e.message));
-process.on("unhandledRejection", (e) => console.error("unhandled:", e?.message || e));
+process.on("uncaughtException", (e) => console.error("uncaught:", e?.stack || e.message || e));
+process.on("unhandledRejection", (e) => console.error("unhandled:", e?.stack || e?.message || e));
 
 const PORT = process.env.PORT || 3000;
 const ROOT = __dirname;
@@ -44,10 +44,21 @@ const server = http.createServer(async (req, res) => {
   });
 });
 
+const MAX_BODY_SIZE = 2 * 1024 * 1024; // 2 MB
+
 function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = "";
-    req.on("data", (c) => (data += c));
+    let size = 0;
+    req.on("data", (c) => {
+      size += Buffer.byteLength(c, "utf8");
+      if (size > MAX_BODY_SIZE) {
+        req.destroy();
+        reject(new Error("Request body too large"));
+        return;
+      }
+      data += c;
+    });
     req.on("end", () => resolve(data));
     req.on("error", reject);
   });
@@ -56,27 +67,46 @@ function readBody(req) {
 async function handleChatProxy(req, res) {
   let upstreamReader = null;
   let keepAlive = null;
+  let upstreamRes = null;
+  const abort = new AbortController();
+  const upstreamTimeout = setTimeout(() => abort.abort(), 29000);
+
+  const cleanup = () => {
+    clearTimeout(upstreamTimeout);
+    if (keepAlive) clearInterval(keepAlive);
+    try { abort.abort(); } catch {}
+    req.off("close", cleanup);
+    req.off("error", cleanup);
+  };
+  req.on("close", cleanup);
+  req.on("error", cleanup);
+
   try {
     const body = JSON.parse(await readBody(req));
     const { endpoint, apiKey, model, messages, temperature } = body;
     if (!endpoint || !apiKey || !model || !messages) {
       res.writeHead(400, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: "Missing endpoint, apiKey, model, or messages" }));
+      cleanup();
       return;
     }
     const base = String(endpoint).replace(/\/+$/, "");
-    const upstream = await fetch(base + "/chat/completions", {
+    upstreamRes = await fetch(base + "/chat/completions", {
       method: "POST",
+      signal: abort.signal,
       headers: {
         "Content-Type": "application/json",
         Authorization: "Bearer " + apiKey,
       },
       body: JSON.stringify({ model, messages, temperature: temperature ?? 0.7, stream: true }),
     });
-    if (!upstream.ok || !upstream.body) {
-      const text = await upstream.text().catch(() => "");
-      res.writeHead(upstream.status, { "Content-Type": "application/json" });
-      res.end(text);
+    if (!upstreamRes.ok || !upstreamRes.body) {
+      const text = await upstreamRes.text().catch(() => "");
+      cleanup();
+      if (!res.writableEnded) {
+        res.writeHead(upstreamRes.status, { "Content-Type": "application/json" });
+        res.end(text || JSON.stringify({ error: "Upstream error" }));
+      }
       return;
     }
     res.writeHead(200, {
@@ -85,7 +115,7 @@ async function handleChatProxy(req, res) {
       "X-Accel-Buffering": "no",
       "Connection": "keep-alive",
     });
-    upstreamReader = upstream.body.getReader();
+    upstreamReader = upstreamRes.body.getReader();
     keepAlive = setInterval(() => {
       if (!res.writableEnded) {
         res.write(": keep-alive\n\n");
@@ -94,20 +124,23 @@ async function handleChatProxy(req, res) {
     while (true) {
       const { done, value } = await upstreamReader.read();
       if (done) break;
-      if (!res.writableEnded) res.write(value);
+      if (res.writableEnded) break;
+      res.write(value);
     }
   } catch (e) {
     console.error("proxy error:", e.message);
-    if (!res.headersSent) {
+    if (!res.headersSent && !res.writableEnded) {
       res.writeHead(502, { "Content-Type": "application/json" });
       res.end(JSON.stringify({ error: { message: "Proxy error: " + e.message } }));
     }
   } finally {
-    if (keepAlive) clearInterval(keepAlive);
+    cleanup();
     if (upstreamReader) {
       try { await upstreamReader.cancel(); } catch {}
     }
-    if (!res.writableEnded) res.end();
+    if (!res.writableEnded && !res.destroyed) {
+      try { res.end(); } catch {}
+    }
   }
 }
 

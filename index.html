@@ -734,6 +734,8 @@ function applyTheme() {
 applyTheme();
 
 let currentModel = null;
+let currentAbort = null;
+let genId = 0;
 
 function resize() {
   const w = renderer.domElement.clientWidth;
@@ -743,8 +745,8 @@ function resize() {
   camera.aspect = w / h;
   camera.updateProjectionMatrix();
 }
-window.addEventListener('resize', resize);
-new ResizeObserver(resize).observe(renderer.domElement);
+const ro = new ResizeObserver(resize);
+ro.observe(renderer.domElement);
 resize();
 
 function animate() {
@@ -774,12 +776,12 @@ function setModel(obj) {
 
   const box = new THREE.Box3().setFromObject(obj);
   const center = box.getCenter(new THREE.Vector3());
+  const size = box.getSize(new THREE.Vector3());
   obj.position.sub(center);
 
   currentModel = obj;
   scene.add(obj);
 
-  const size = box.getSize(new THREE.Vector3());
   const maxDim = Math.max(size.x, size.y, size.z) || 1;
   const fov = (camera.fov * Math.PI) / 180;
   let dist = (maxDim / (2 * Math.tan(fov / 2))) * 1.9;
@@ -803,23 +805,18 @@ function setModel(obj) {
   document.querySelectorAll('.exports button').forEach((b) => (b.disabled = false));
 }
 
-function extractCode(text) {
-  const fence = text.match(/```(?:js|javascript)?\s*([\s\S]*?)```/i);
-  if (fence) return fence[1].trim();
-  const fnIdx = text.indexOf('function buildModel');
-  if (fnIdx >= 0) return text.slice(fnIdx).trim();
-  return text.trim();
-}
-
-function extractPlan(text) {
+function parseResponse(text) {
   const fence = text.match(/```(?:js|javascript)?\s*([\s\S]*?)```/i);
   if (fence) {
-    const before = text.slice(0, fence.index).trim();
-    return before.replace(/^#+\s*/gm, '').trim();
+    const code = fence[1].trim();
+    const plan = text.slice(0, fence.index).trim().replace(/^#+\s*/gm, '').trim();
+    return { code, plan };
   }
   const fnIdx = text.indexOf('function buildModel');
-  if (fnIdx > 0) return text.slice(0, fnIdx).trim();
-  return '';
+  if (fnIdx >= 0) {
+    return { code: text.slice(fnIdx).trim(), plan: fnIdx > 0 ? text.slice(0, fnIdx).trim() : '' };
+  }
+  return { code: text.trim(), plan: '' };
 }
 
 function runModelCode(code) {
@@ -847,7 +844,7 @@ function baseEndpoint() {
   return settings.endpoint.replace(/\/+$/, '');
 }
 
-async function callAgent(userPrompt) {
+async function callAgent(userPrompt, signal) {
   messages.push({ role: 'user', content: userPrompt });
   if (messages.length > 12) messages = [messages[0], ...messages.slice(-10)];
   let res;
@@ -855,6 +852,7 @@ async function callAgent(userPrompt) {
     res = await fetch('/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal,
       body: JSON.stringify({
         endpoint: baseEndpoint(),
         apiKey: settings.apiKey,
@@ -864,6 +862,7 @@ async function callAgent(userPrompt) {
       }),
     });
   } catch (fetchErr) {
+    if (signal?.aborted) throw new Error('Generation cancelled.');
     throw new Error('Cannot reach server. Check your connection and try again. (' + fetchErr.message + ')');
   }
   if (!res.ok) {
@@ -909,14 +908,22 @@ async function generate() {
   const prompt = $('prompt').value.trim();
   if (!prompt) { setStatus('Type a prompt first.', 'error'); return; }
 
+  if (currentAbort) {
+    currentAbort.abort();
+    setStatus('Cancelling previous request…', '');
+    return;
+  }
+
   const btn = $('generateBtn');
   btn.disabled = true;
   showLoader(deepThink ? 'Thinking deeply…' : 'Agent is modeling…', true);
   setStatus('Generating…');
+  const abort = new AbortController();
+  currentAbort = abort;
+  const myGen = ++genId;
   try {
-    const raw = await callAgent(prompt);
-    const code = extractCode(raw);
-    const plan = extractPlan(raw);
+    const raw = await callAgent(prompt, abort.signal);
+    const { code, plan } = parseResponse(raw);
     if (plan) {
       $('aiNotesText').textContent = plan;
       $('aiNotes').classList.add('show');
@@ -925,11 +932,15 @@ async function generate() {
     runModelCode(code);
     setStatus('Model ready. Orbit to inspect, then export.', 'ok');
   } catch (e) {
+    if (messages[messages.length - 1]?.role === 'user') messages.pop();
     setStatus(e.message, 'error');
     $('codeView').textContent = '(generation failed)';
   } finally {
-    btn.disabled = false;
-    showLoader('', false);
+    if (currentAbort === abort) currentAbort = null;
+    if (genId === myGen) {
+      btn.disabled = false;
+      showLoader('', false);
+    }
   }
 }
 
@@ -1095,7 +1106,7 @@ function renderChatHistory() {
     const text = document.createElement('div');
     let display = m.content;
     if (m.role === 'assistant') {
-      const plan = extractPlan(m.content);
+      const { plan } = parseResponse(m.content);
       display = plan || '(generated code)';
     }
     text.textContent = display;
