@@ -1,0 +1,694 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AI 3D Studio</title>
+<style>
+  :root {
+    --bg: #0b0d12;
+    --bg-2: #12151c;
+    --panel: #161a23;
+    --panel-2: #1c212c;
+    --border: #262c39;
+    --text: #e7ecf3;
+    --muted: #8b94a6;
+    --accent: #6ea8ff;
+    --accent-2: #8b5cf6;
+    --good: #34d399;
+    --bad: #f87171;
+    --radius: 10px;
+  }
+  * { box-sizing: border-box; }
+  html, body { height: 100%; margin: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+  header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 10px 16px;
+    background: linear-gradient(180deg, var(--bg-2), var(--bg));
+    border-bottom: 1px solid var(--border);
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2px;
+  }
+  .logo {
+    width: 26px; height: 26px;
+    border-radius: 7px;
+    background: conic-gradient(from 210deg, var(--accent), var(--accent-2), var(--accent));
+    box-shadow: 0 0 18px rgba(110,168,255,.35);
+  }
+  .brand small { color: var(--muted); font-weight: 500; }
+  .spacer { flex: 1; }
+  .pill {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 4px 10px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--panel);
+    max-width: 280px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  button {
+    font: inherit;
+    color: var(--text);
+    background: var(--panel-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 14px;
+    cursor: pointer;
+    transition: background .15s, border-color .15s, transform .05s;
+  }
+  button:hover { background: #232a37; }
+  button:active { transform: translateY(1px); }
+  button.primary {
+    background: linear-gradient(180deg, var(--accent), #4f8ef7);
+    border-color: transparent;
+    color: #07101f;
+    font-weight: 700;
+  }
+  button.primary:hover { filter: brightness(1.05); }
+  button.primary:disabled { opacity: .5; cursor: not-allowed; }
+  button.ghost { background: transparent; }
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 340px 1fr;
+    min-height: 0;
+  }
+  aside {
+    background: var(--panel);
+    border-right: 1px solid var(--border);
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    overflow-y: auto;
+  }
+  aside h2 {
+    margin: 0;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+  }
+  textarea {
+    width: 100%;
+    min-height: 96px;
+    resize: vertical;
+    background: var(--bg-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 10px;
+    font: inherit;
+    line-height: 1.4;
+  }
+  textarea:focus { outline: none; border-color: var(--accent); }
+  .row { display: flex; gap: 8px; }
+  .row > button { flex: 1; }
+  .examples { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    font-size: 12px;
+    padding: 5px 9px;
+    border-radius: 999px;
+    background: var(--bg-2);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    cursor: pointer;
+  }
+  .chip:hover { color: var(--text); border-color: var(--accent); }
+  .status {
+    font-size: 13px;
+    min-height: 20px;
+    color: var(--muted);
+    line-height: 1.4;
+    word-break: break-word;
+  }
+  .status.error { color: var(--bad); }
+  .status.ok { color: var(--good); }
+  details {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--bg-2);
+  }
+  details summary {
+    cursor: pointer;
+    padding: 8px 10px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  pre {
+    margin: 0;
+    padding: 10px 12px;
+    max-height: 220px;
+    overflow: auto;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #c8d3e6;
+    white-space: pre-wrap;
+    word-break: break-word;
+  }
+  .viewport {
+    position: relative;
+    min-width: 0;
+    background: radial-gradient(circle at 50% 30%, #151922, #0a0c11);
+  }
+  canvas { display: block; width: 100%; height: 100%; }
+  .hud {
+    position: absolute;
+    left: 12px; right: 12px; bottom: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    pointer-events: none;
+    gap: 12px;
+  }
+  .stats {
+    background: rgba(12,15,22,.7);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 8px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    backdrop-filter: blur(6px);
+    pointer-events: auto;
+  }
+  .stats b { color: var(--text); }
+  .exports { display: flex; gap: 8px; pointer-events: auto; }
+  .exports button { font-size: 13px; padding: 8px 12px; }
+  .empty-hint {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted);
+    font-size: 14px;
+    pointer-events: none;
+    text-align: center;
+    padding: 40px;
+  }
+  .loader {
+    position: absolute;
+    inset: 0;
+    background: rgba(8,10,15,.55);
+    backdrop-filter: blur(2px);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 14px;
+    z-index: 5;
+  }
+  .loader.show { display: flex; }
+  .spinner {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    border: 3px solid rgba(255,255,255,.15);
+    border-top-color: var(--accent);
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  dialog {
+    background: var(--panel);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    width: min(460px, 92vw);
+    box-shadow: 0 20px 60px rgba(0,0,0,.5);
+  }
+  dialog::backdrop { background: rgba(0,0,0,.6); }
+  dialog h3 { margin: 0 0 4px; }
+  dialog p.sub { margin: 0 0 14px; color: var(--muted); font-size: 13px; }
+  label { display: block; font-size: 12px; color: var(--muted); margin: 12px 0 4px; }
+  input, select {
+    width: 100%;
+    background: var(--bg-2);
+    color: var(--text);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 9px 10px;
+    font: inherit;
+  }
+  input:focus, select:focus { outline: none; border-color: var(--accent); }
+  .presets { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px; }
+  .presets button { font-size: 12px; padding: 6px 10px; }
+  .dlg-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 18px; }
+  .help { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  @media (max-width: 760px) {
+    main { grid-template-columns: 1fr; grid-template-rows: auto 1fr; }
+    aside { max-height: 42vh; border-right: none; border-bottom: 1px solid var(--border); }
+  }
+</style>
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo"></div>
+      <div>AI 3D Studio <small>· prompt to model</small></div>
+    </div>
+    <div class="spacer"></div>
+    <div class="pill" id="modelPill" title="Active model">no model set</div>
+    <button class="ghost" id="settingsBtn">Settings</button>
+  </header>
+
+  <main>
+    <aside>
+      <h2>Describe your model</h2>
+      <textarea id="prompt" placeholder="e.g. a glossy red apple with a small brown stem and a green leaf"></textarea>
+      <div class="examples" id="examples"></div>
+      <div class="row">
+        <button class="primary" id="generateBtn">Generate</button>
+        <button class="ghost" id="clearBtn">New</button>
+      </div>
+      <div class="status" id="status"></div>
+      <details>
+        <summary>Generated code (agent output)</summary>
+        <pre id="codeView">No code yet.</pre>
+      </details>
+    </aside>
+
+    <section class="viewport">
+      <canvas id="c"></canvas>
+      <div class="empty-hint" id="emptyHint">Enter a prompt and hit Generate to create a 3D model you can orbit and export.</div>
+      <div class="loader" id="loader">
+        <div class="spinner"></div>
+        <div id="loaderText" style="color:var(--muted);font-size:13px">Generating model…</div>
+      </div>
+      <div class="hud">
+        <div class="stats" id="stats">No model</div>
+        <div class="exports">
+          <button data-export="stl" disabled>Download STL</button>
+          <button data-export="obj" disabled>Download OBJ</button>
+          <button data-export="glb" disabled>Download GLB</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <dialog id="settingsDlg">
+    <h3>AI Provider</h3>
+    <p class="sub">Any OpenAI-compatible endpoint works. Your key is stored only in this browser (localStorage).</p>
+    <div class="presets" id="presets"></div>
+    <label for="endpoint">Endpoint base URL</label>
+    <input id="endpoint" placeholder="https://api.openai.com/v1" />
+    <label for="model">Model</label>
+    <input id="model" placeholder="gpt-4o-mini" />
+    <label for="apiKey">API key</label>
+    <input id="apiKey" type="password" placeholder="sk-..." autocomplete="off" />
+    <div class="help">Tip: use <code>https://api.z.ai/api/paas/v4</code> with model <code>glm-4.6</code>, or <code>http://localhost:11434/v1</code> for local Ollama.</div>
+    <div class="dlg-actions">
+      <button class="ghost" id="cancelSettings">Cancel</button>
+      <button class="primary" id="saveSettings">Save</button>
+    </div>
+  </dialog>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+import { STLExporter } from 'three/addons/exporters/STLExporter.js';
+import { OBJExporter } from 'three/addons/exporters/OBJExporter.js';
+import { GLTFExporter } from 'three/addons/exporters/GLTFExporter.js';
+
+const SYSTEM_PROMPT = `You are an expert procedural 3D modeling agent. The user describes an object; you turn it into a real 3D model by writing JavaScript that builds Three.js geometry.
+
+OUTPUT CONTRACT (very important):
+- Reply with a short one-sentence plan, then a SINGLE fenced JavaScript code block.
+- The code block MUST define a function named buildModel(THREE) and end with "return buildModel(THREE);" is NOT needed — just define the function. The host appends the call.
+- buildModel(THREE) must RETURN a THREE.Object3D (usually a THREE.Group containing meshes).
+- Do NOT import anything, do NOT load external assets/textures/fonts, do NOT use fetch or DOM. Only use the THREE object passed in.
+- Use MeshStandardMaterial for realistic shading and correct export.
+- Compose primitives (BoxGeometry, SphereGeometry, CylinderGeometry, ConeGeometry, TorusGeometry, TorusKnotGeometry, IcosahedronGeometry, DodecahedronGeometry, OctahedronGeometry, TetrahedronGeometry, LatheGeometry, ExtrudeGeometry, TubeGeometry, RingGeometry, PlaneGeometry, CapsuleGeometry) and transform them via position/rotation/scale.
+- Group multiple parts with new THREE.Group().
+- Center the model around the origin (0,0,0) and keep its largest dimension roughly between 2 and 20 units.
+- Make the result recognizable and visually clean. Prefer low-medium poly counts.
+- When refining, incorporate the user's new instructions to modify the previous design.
+
+Example shape:
+\`\`\`js
+function buildModel(THREE) {
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(
+    new THREE.SphereGeometry(1, 32, 24),
+    new THREE.MeshStandardMaterial({ color: 0xc0392b, roughness: 0.35, metalness: 0.1 })
+  );
+  body.scale.set(1, 1.05, 1);
+  g.add(body);
+  const stem = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.05, 0.07, 0.4, 12),
+    new THREE.MeshStandardMaterial({ color: 0x6b4f2a })
+  );
+  stem.position.y = 1.1;
+  g.add(stem);
+  return g;
+}
+\`\`\``;
+
+const PRESETS = [
+  { name: 'OpenAI', endpoint: 'https://api.openai.com/v1', model: 'gpt-4o-mini' },
+  { name: 'Z.AI GLM', endpoint: 'https://api.z.ai/api/paas/v4', model: 'glm-4.6' },
+  { name: 'OpenRouter', endpoint: 'https://openrouter.ai/api/v1', model: 'openai/gpt-4o-mini' },
+  { name: 'Ollama', endpoint: 'http://localhost:11434/v1', model: 'llama3.1' },
+];
+
+const EXAMPLES = [
+  'a glossy red apple with stem and leaf',
+  'a low-poly pine tree',
+  'a coffee mug with a handle',
+  'a medieval castle tower',
+  'a cute robot head',
+  'a simple house with a pitched roof',
+];
+
+const $ = (id) => document.getElementById(id);
+const ls = {
+  get: (k, d) => { try { return localStorage.getItem(k) ?? d; } catch { return d; } },
+  set: (k, v) => { try { localStorage.setItem(k, v); } catch {} },
+};
+
+const settings = {
+  endpoint: ls.get('ai3d.endpoint', 'https://api.openai.com/v1'),
+  model: ls.get('ai3d.model', 'gpt-4o-mini'),
+  apiKey: ls.get('ai3d.apiKey', ''),
+};
+
+let messages = [{ role: 'system', content: SYSTEM_PROMPT }];
+
+const renderer = new THREE.WebGLRenderer({ canvas: $('c'), antialias: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x0d1016);
+scene.fog = new THREE.Fog(0x0d1016, 40, 120);
+
+const camera = new THREE.PerspectiveCamera(50, 1, 0.1, 1000);
+camera.position.set(8, 6, 10);
+
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.enableDamping = true;
+controls.dampingFactor = 0.08;
+
+scene.add(new THREE.HemisphereLight(0xbfd4ff, 0x202830, 0.9));
+const ambient = new THREE.AmbientLight(0xffffff, 0.25); scene.add(ambient);
+const dir = new THREE.DirectionalLight(0xffffff, 1.6);
+dir.position.set(10, 16, 8); scene.add(dir);
+const dir2 = new THREE.DirectionalLight(0x88aaff, 0.5);
+dir2.position.set(-8, 6, -6); scene.add(dir2);
+
+const grid = new THREE.GridHelper(40, 40, 0x2a3344, 0x1a2030);
+scene.add(grid);
+const axes = new THREE.AxesHelper(2); axes.visible = false; scene.add(axes);
+
+let currentModel = null;
+
+function resize() {
+  const w = renderer.domElement.clientWidth;
+  const h = renderer.domElement.clientHeight;
+  if (w === 0 || h === 0) return;
+  renderer.setSize(w, h, false);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+window.addEventListener('resize', resize);
+new ResizeObserver(resize).observe(renderer.domElement);
+resize();
+
+function animate() {
+  controls.update();
+  renderer.render(scene, camera);
+  requestAnimationFrame(animate);
+}
+animate();
+
+function disposeObject(obj) {
+  obj.traverse((o) => {
+    if (o.isMesh) {
+      o.geometry?.dispose();
+      const m = o.material;
+      if (Array.isArray(m)) m.forEach((x) => x.dispose());
+      else m?.dispose();
+    }
+  });
+}
+
+function setModel(obj) {
+  if (currentModel) {
+    scene.remove(currentModel);
+    disposeObject(currentModel);
+  }
+  if (!obj || !obj.isObject3D) throw new Error('buildModel did not return a THREE.Object3D');
+
+  const box = new THREE.Box3().setFromObject(obj);
+  const center = box.getCenter(new THREE.Vector3());
+  obj.position.sub(center);
+
+  currentModel = obj;
+  scene.add(obj);
+
+  const size = box.getSize(new THREE.Vector3());
+  const maxDim = Math.max(size.x, size.y, size.z) || 1;
+  const fov = (camera.fov * Math.PI) / 180;
+  let dist = (maxDim / (2 * Math.tan(fov / 2))) * 1.9;
+  dist = Math.max(dist, 4);
+  const angle = Math.PI / 5;
+  camera.position.set(dist * Math.cos(angle), dist * 0.7, dist * Math.sin(angle) * 1.4 + dist * 0.3);
+  controls.target.set(0, 0, 0);
+  controls.update();
+
+  let verts = 0, tris = 0;
+  obj.traverse((o) => {
+    if (o.isMesh && o.geometry) {
+      const g = o.geometry;
+      const v = g.attributes.position?.count ?? 0;
+      verts += v;
+      tris += g.index ? g.index.count / 3 : v / 3;
+    }
+  });
+  $('stats').innerHTML = `<b>${Math.round(tris)}</b> triangles · <b>${verts}</b> vertices · <b>${maxDim.toFixed(2)}</b> units`;
+  $('emptyHint').style.display = 'none';
+  document.querySelectorAll('.exports button').forEach((b) => (b.disabled = false));
+}
+
+function extractCode(text) {
+  const fence = text.match(/```(?:js|javascript)?\s*([\s\S]*?)```/i);
+  if (fence) return fence[1].trim();
+  const fnIdx = text.indexOf('function buildModel');
+  if (fnIdx >= 0) return text.slice(fnIdx).trim();
+  return text.trim();
+}
+
+function runModelCode(code) {
+  $('codeView').textContent = code;
+  const runner = new Function(
+    'THREE',
+    code + '\n;if(typeof buildModel==="function")return buildModel(THREE);if(typeof buildModel!=="undefined")return buildModel;throw new Error("buildModel is not defined in the generated code");'
+  );
+  const obj = runner(THREE);
+  setModel(obj);
+}
+
+function setStatus(text, kind = '') {
+  const el = $('status');
+  el.textContent = text;
+  el.className = 'status' + (kind ? ' ' + kind : '');
+}
+
+function showLoader(text, on) {
+  $('loaderText').textContent = text;
+  $('loader').classList.toggle('show', on);
+}
+
+function baseEndpoint() {
+  return settings.endpoint.replace(/\/+$/, '');
+}
+
+async function callAgent(userPrompt) {
+  messages.push({ role: 'user', content: userPrompt });
+  if (messages.length > 12) messages = [messages[0], ...messages.slice(-10)];
+  const res = await fetch(baseEndpoint() + '/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + settings.apiKey,
+    },
+    body: JSON.stringify({
+      model: settings.model,
+      messages,
+      temperature: 0.7,
+    }),
+  });
+  if (!res.ok) {
+    const t = await res.text().catch(() => '');
+    throw new Error(`API ${res.status}: ${t.slice(0, 300)}`);
+  }
+  const data = await res.json();
+  const msg = data.choices?.[0]?.message?.content;
+  if (!msg) throw new Error('Empty response from model.');
+  messages.push({ role: 'assistant', content: msg });
+  return msg;
+}
+
+async function generate() {
+  if (!settings.apiKey && !/localhost|127\.0\.0\.1/.test(settings.endpoint)) {
+    setStatus('Add your API key in Settings first.', 'error');
+    $('settingsBtn').click();
+    return;
+  }
+  const prompt = $('prompt').value.trim();
+  if (!prompt) { setStatus('Type a prompt first.', 'error'); return; }
+
+  const btn = $('generateBtn');
+  btn.disabled = true;
+  showLoader('Agent is modeling…', true);
+  setStatus('Generating…');
+  try {
+    const raw = await callAgent(prompt);
+    const code = extractCode(raw);
+    runModelCode(code);
+    setStatus('Model ready. Orbit to inspect, then export.', 'ok');
+  } catch (e) {
+    setStatus(e.message, 'error');
+    $('codeView').textContent = '(generation failed)';
+  } finally {
+    btn.disabled = false;
+    showLoader('', false);
+  }
+}
+
+function download(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = filename;
+  document.body.appendChild(a); a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+async function exportModel(format) {
+  if (!currentModel) return;
+  try {
+    if (format === 'stl') {
+      const ascii = new STLExporter().parse(currentModel);
+      download(new Blob([ascii], { type: 'model/stl' }), 'model.stl');
+    } else if (format === 'obj') {
+      const text = new OBJExporter().parse(currentModel);
+      download(new Blob([text], { type: 'text/plain' }), 'model.obj');
+    } else if (format === 'glb') {
+      await new Promise((resolve, reject) => {
+        new GLTFExporter().parse(
+          currentModel,
+          (result) => {
+            download(new Blob([result], { type: 'model/gltf-binary' }), 'model.glb');
+            resolve();
+          },
+          (err) => reject(err),
+          { binary: true }
+        );
+      });
+    }
+    setStatus(`Exported ${format.toUpperCase()}.`, 'ok');
+  } catch (e) {
+    setStatus('Export failed: ' + e.message, 'error');
+  }
+}
+
+function newModel() {
+  if (currentModel) { scene.remove(currentModel); disposeObject(currentModel); currentModel = null; }
+  messages = [{ role: 'system', content: SYSTEM_PROMPT }];
+  $('prompt').value = '';
+  $('codeView').textContent = 'No code yet.';
+  $('stats').textContent = 'No model';
+  $('emptyHint').style.display = '';
+  document.querySelectorAll('.exports button').forEach((b) => (b.disabled = true));
+  setStatus('');
+}
+
+function openSettings() {
+  $('endpoint').value = settings.endpoint;
+  $('model').value = settings.model;
+  $('apiKey').value = settings.apiKey;
+  $('settingsDlg').showModal();
+}
+function saveSettings() {
+  settings.endpoint = $('endpoint').value.trim() || 'https://api.openai.com/v1';
+  settings.model = $('model').value.trim() || 'gpt-4o-mini';
+  settings.apiKey = $('apiKey').value.trim();
+  ls.set('ai3d.endpoint', settings.endpoint);
+  ls.set('ai3d.model', settings.model);
+  ls.set('ai3d.apiKey', settings.apiKey);
+  updateModelPill();
+  $('settingsDlg').close();
+}
+
+function updateModelPill() {
+  $('modelPill').textContent = settings.model ? `model: ${settings.model}` : 'no model set';
+}
+
+function buildExampleChips() {
+  const wrap = $('examples');
+  EXAMPLES.forEach((ex) => {
+    const b = document.createElement('button');
+    b.className = 'chip';
+    b.textContent = ex;
+    b.addEventListener('click', () => { $('prompt').value = ex; $('prompt').focus(); });
+    wrap.appendChild(b);
+  });
+}
+function buildPresets() {
+  const wrap = $('presets');
+  PRESETS.forEach((p) => {
+    const b = document.createElement('button');
+    b.textContent = p.name;
+    b.addEventListener('click', () => {
+      $('endpoint').value = p.endpoint;
+      $('model').value = p.model;
+    });
+    wrap.appendChild(b);
+  });
+}
+
+$('generateBtn').addEventListener('click', generate);
+$('clearBtn').addEventListener('click', newModel);
+$('settingsBtn').addEventListener('click', openSettings);
+$('saveSettings').addEventListener('click', saveSettings);
+$('cancelSettings').addEventListener('click', () => $('settingsDlg').close());
+document.querySelectorAll('.exports button').forEach((b) =>
+  b.addEventListener('click', () => exportModel(b.dataset.export))
+);
+$('prompt').addEventListener('keydown', (e) => {
+  if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generate();
+});
+
+buildExampleChips();
+buildPresets();
+updateModelPill();
+if (!settings.apiKey) setStatus('Open Settings to add your API key.', '');
+</script>
+</body>
+</html>
