@@ -898,6 +898,16 @@ async function saveProject(project) {
   return project;
 }
 
+async function renameProject(id, newTitle) {
+  const project = await dbRequest('projects', 'readonly', store => store.get(id));
+  if (!project) return;
+  project.title = newTitle.trim() || 'Untitled';
+  await saveProject(project);
+  if (currentProject && currentProject.id === id) {
+    currentProject.title = project.title;
+  }
+}
+
 async function deleteProject(id) {
   await dbRequest('projects', 'readwrite', store => store.delete(id));
   const db = await openDB();
@@ -1585,6 +1595,17 @@ async function renderProjectList() {
     item.appendChild(title);
     const actions = document.createElement('span');
     actions.className = 'actions';
+    const rename = document.createElement('button');
+    rename.textContent = '✎';
+    rename.title = 'Rename project';
+    rename.addEventListener('click', async (e) => {
+      e.stopPropagation();
+      const newTitle = prompt('Rename project:', p.title || 'Untitled');
+      if (newTitle === null) return;
+      await renameProject(p.id, newTitle);
+      await renderProjectList();
+    });
+    actions.appendChild(rename);
     const del = document.createElement('button');
     del.textContent = '×';
     del.title = 'Delete project';
