@@ -561,7 +561,6 @@
       <div class="logo"></div>
       <div>AI 3D Studio <small>· prompt to model</small></div>
     </div>
-    <div id="accountSection" style="margin-left:12px"></div>
     <div class="spacer"></div>
     <div class="pill" id="modelPill" title="Active model">no model set</div>
     <button class="ghost theme-btn" id="themeBtn" title="Toggle light/dark">🌙</button>
@@ -1477,18 +1476,6 @@ function renderChatThread() {
 }
 
 /* ---------- Accounts UI ---------- */
-function updateAccountUI() {
-  const section = $('accountSection');
-  if (currentAccount) {
-    section.innerHTML = `<button class="ghost sm" id="signOutBtn">Sign out</button>`;
-    $('signOutBtn').addEventListener('click', signOut);
-  } else {
-    section.innerHTML = `<button class="primary sm" id="signInBtn">Sign in</button>`;
-    $('signInBtn').addEventListener('click', openAuthDialog);
-  }
-  updateAccountDrawer();
-}
-
 function updateAccountDrawer() {
   const el = $('accountDrawer');
   if (currentAccount) {
@@ -1497,8 +1484,10 @@ function updateAccountDrawer() {
       <div class="account-info">
         <b>${escapeHtml(currentAccount.username)}</b>
       </div>
+      <button class="ghost sm" id="drawerSignOutBtn" style="margin-top:8px;width:100%">Sign out</button>
       <div class="drawer-hint" style="margin-top:6px">Signed in locally. Data stays in this browser.</div>
     `;
+    $('drawerSignOutBtn').addEventListener('click', signOut);
   } else {
     el.innerHTML = `
       <h2>Account</h2>
@@ -1530,7 +1519,7 @@ async function handleSignIn() {
     await loadAccountSettings();
     applyTheme();
     syncDeepThink(false);
-    updateAccountUI();
+    updateAccountDrawer();
     closeAuthDialog();
     const projects = await getProjects(currentAccount.username);
     if (projects.length) await loadProject(projects[0]);
@@ -1552,7 +1541,7 @@ async function handleSignUp() {
     currentAccount = await createAccount(username, password);
     ls.set('ai3d.currentAccount', username);
     await saveAccountSettings();
-    updateAccountUI();
+    updateAccountDrawer();
     closeAuthDialog();
     await loadProject(null);
     await renderProjectList();
@@ -1566,7 +1555,7 @@ async function signOut() {
   currentAccount = null;
   currentProject = null;
   ls.del('ai3d.currentAccount');
-  updateAccountUI();
+  updateAccountDrawer();
   await renderProjectList();
   await loadProject(null);
   setStatus('Signed out.', '');
@@ -1731,7 +1720,7 @@ async function init() {
   setTimeout(resize, 200);
 
   // Render UI immediately so buttons work even if DB is slow/blocked
-  updateAccountUI();
+  updateAccountDrawer();
   await renderProjectList();
   renderChatThread();
   if (!settings.apiKey) setStatus('Open Settings to add your API key.', '');
@@ -1747,7 +1736,7 @@ async function init() {
       syncDeepThink(false);
       const projects = await getProjects(currentAccount.username);
       if (projects.length) await loadProject(projects[0]);
-      updateAccountUI();
+      updateAccountDrawer();
       await renderProjectList();
     } else {
       ls.del('ai3d.currentAccount');
