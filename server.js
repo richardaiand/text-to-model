@@ -116,11 +116,14 @@ async function proxyChat(req, res) {
 }
 
 app.post('/api/chat', proxyChat);
+app.use('/src', express.static(path.join(__dirname, 'src')));
 
-app.use(express.static(path.join(__dirname, 'dist')));
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'index.html'));
+});
 
 app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, 'dist', 'index.html'));
+  res.sendFile(path.join(__dirname, 'index.html'));
 });
 
 app.listen(PORT, () => {
