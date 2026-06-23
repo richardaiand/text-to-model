@@ -68,18 +68,39 @@ async function handleChatProxy(req, res) {
   let upstreamReader = null;
   let keepAlive = null;
   let upstreamRes = null;
+  let finished = false;
+  let abortReason = null;
   const abort = new AbortController();
-  const upstreamTimeout = setTimeout(() => abort.abort(), 29000);
+  const upstreamTimeout = setTimeout(() => {
+    abortReason = "timeout";
+    abort.abort();
+  }, 29000);
 
   const cleanup = () => {
     clearTimeout(upstreamTimeout);
     if (keepAlive) clearInterval(keepAlive);
-    try { abort.abort(); } catch {}
-    req.off("close", cleanup);
-    req.off("error", cleanup);
+    req.off("close", onReqClose);
+    req.off("error", onReqError);
+    if (!finished) {
+      try { abort.abort(); } catch {}
+    }
   };
-  req.on("close", cleanup);
-  req.on("error", cleanup);
+
+  const onReqClose = () => {
+    if (!finished) {
+      abortReason = abortReason || "client disconnected";
+      abort.abort();
+    }
+  };
+  const onReqError = (err) => {
+    if (!finished) {
+      abortReason = abortReason || (err?.message || "request error");
+      abort.abort();
+    }
+  };
+
+  req.on("close", onReqClose);
+  req.on("error", onReqError);
 
   try {
     const body = JSON.parse(await readBody(req));
@@ -101,6 +122,7 @@ async function handleChatProxy(req, res) {
       body: JSON.stringify({ model, messages, temperature: temperature ?? 0.7, stream: true }),
     });
     if (!upstreamRes.ok || !upstreamRes.body) {
+      finished = true;
       const text = await upstreamRes.text().catch(() => "");
       cleanup();
       if (!res.writableEnded) {
@@ -127,11 +149,17 @@ async function handleChatProxy(req, res) {
       if (res.writableEnded) break;
       res.write(value);
     }
+    finished = true;
   } catch (e) {
-    console.error("proxy error:", e.message);
-    if (!res.headersSent && !res.writableEnded) {
+    console.error("proxy error:", e.message, { reason: abortReason });
+    if (res.headersSent && !res.writableEnded) {
+      res.write(`data: ${JSON.stringify({ error: { message: abortReason === "timeout" ? "Generation timed out (29s limit). Try a faster model." : "Generation aborted." } })}\n\n`);
+    } else if (!res.headersSent && !res.writableEnded) {
       res.writeHead(502, { "Content-Type": "application/json" });
-      res.end(JSON.stringify({ error: { message: "Proxy error: " + e.message } }));
+      const message = abortReason === "timeout"
+        ? "Generation timed out (29s limit). Try a faster model like DeepSeek v4 Flash."
+        : (abortReason === "client disconnected" ? "Client disconnected." : "Proxy error: " + e.message);
+      res.end(JSON.stringify({ error: { message } }));
     }
   } finally {
     cleanup();
