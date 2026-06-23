@@ -3,7 +3,6 @@
   "version": "1.0.0",
   "description": "Turn text prompts into real, downloadable 3D model files via an AI agent and Three.js.",
   "private": true,
-  "type": "module",
   "main": "server.js",
   "scripts": {
     "dev": "vite",
