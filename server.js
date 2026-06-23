@@ -53,7 +53,7 @@ async function proxyChat(req, res) {
   const upstreamTimeout = setTimeout(() => {
     abortReason = 'timeout';
     abort.abort();
-  }, 118000);
+  }, 178000);
 
   const cleanup = () => {
     clearTimeout(upstreamTimeout);
@@ -154,7 +154,7 @@ async function proxyChat(req, res) {
     console.error('proxy error:', e.message, { reason: abortReason });
     if (!res.writableEnded) {
       const message = abortReason === 'timeout'
-        ? 'Generation timed out (118s limit). Try a faster model or lower detail level.'
+        ? 'Generation timed out (3m limit). Try a faster model or lower detail level.'
         : (abortReason === 'client disconnected' ? 'Client disconnected.' : 'Proxy error: ' + e.message);
       sse(res, { error: { message } });
     }
