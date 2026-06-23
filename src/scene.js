@@ -98,6 +98,25 @@ export function setModel(obj) {
   currentModel = obj;
   scene.add(obj);
 
+  obj.traverse((o) => {
+    if (o.isMesh && o.material) {
+      const materials = Array.isArray(o.material) ? o.material : [o.material];
+      materials.forEach((m) => {
+        if (!m) return;
+        m.side = THREE.FrontSide;
+        m.depthTest = true;
+        m.depthWrite = true;
+        if (!m.transparent || m.opacity >= 0.99) {
+          m.transparent = false;
+          m.opacity = 1;
+        }
+      });
+      if (o.geometry && o.geometry.attributes.normal) {
+        o.geometry.computeVertexNormals();
+      }
+    }
+  });
+
   const maxDim = Math.max(size.x, size.y, size.z) || 1;
   const fov = (camera.fov * Math.PI) / 180;
   let dist = (maxDim / (2 * Math.tan(fov / 2))) * 1.9;
