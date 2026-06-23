@@ -53,7 +53,7 @@ async function proxyChat(req, res) {
   const upstreamTimeout = setTimeout(() => {
     abortReason = 'timeout';
     abort.abort();
-  }, 28000);
+  }, 118000);
 
   const cleanup = () => {
     clearTimeout(upstreamTimeout);

@@ -8,11 +8,12 @@ import {
 } from './db.js';
 import { setStatus, showLoader, updateModelPill, renderChatThread, updateAccountDrawer, renderProjectList, buildModelList, buildPresets } from './ui.js';
 
-let deepThink = ls.get('ai3d.deepThink', 'false') === 'true';
+let detail = ls.get('ai3d.detail', 'medium');
+if (!['low', 'medium', 'high'].includes(detail)) detail = 'medium';
 let lightTheme = ls.get('ai3d.theme', 'dark') === 'light';
 let currentAccount = null;
 let currentProject = null;
-let messages = [{ role: 'system', content: getSystemPrompt(deepThink) }];
+let messages = [{ role: 'system', content: getSystemPrompt(detail) }];
 let currentAbort = null;
 let genId = 0;
 let drawerOpen = true;
@@ -29,12 +30,12 @@ ro.observe(renderer.domElement);
 resize();
 animate();
 
-function syncDeepThink(save = true) {
-  const el = $('deepThinkToggle');
-  if (el) el.classList.toggle('on', deepThink);
-  ls.set('ai3d.deepThink', String(deepThink));
-  messages = [{ role: 'system', content: getSystemPrompt(deepThink) }];
-  if (save) saveAccountSettings(currentAccount, settings, lightTheme, deepThink);
+function syncDetail(save = true) {
+  const el = $('detailSelect');
+  if (el) el.value = detail;
+  ls.set('ai3d.detail', detail);
+  messages = [{ role: 'system', content: getSystemPrompt(detail) }];
+  if (save) saveAccountSettings(currentAccount, settings, lightTheme, detail);
 }
 
 function bindAccountDrawer() {
@@ -61,7 +62,8 @@ async function generate() {
 
   const btn = $('generateBtn');
   btn.disabled = true;
-  showLoader(deepThink ? 'Thinking deeply…' : 'Agent is modeling…', true);
+  const detailLabels = { low: 'Drafting…', medium: 'Modeling…', high: 'Detailing…' };
+  showLoader(detailLabels[detail] || 'Modeling…', true);
   setStatus('Generating…');
   const abort = new AbortController();
   currentAbort = abort;
@@ -73,7 +75,7 @@ async function generate() {
   }
 
   try {
-    const raw = await callAgent(prompt, abort.signal, messages, deepThink);
+    const raw = await callAgent(prompt, abort.signal, messages, detail);
     const { code, plan } = parseResponse(raw);
     messages.push({ role: 'user', content: prompt });
     messages.push({ role: 'assistant', content: raw });
@@ -109,7 +111,7 @@ async function newProject() {
     scene.remove(currentModel);
     disposeObject(currentModel);
   }
-  messages = [{ role: 'system', content: getSystemPrompt(deepThink) }];
+  messages = [{ role: 'system', content: getSystemPrompt(detail) }];
   $('prompt').value = '';
   $('stats').textContent = 'No model';
   $('emptyHint').style.display = '';
@@ -132,7 +134,7 @@ async function loadProject(project) {
     scene.remove(currentModel);
     disposeObject(currentModel);
   }
-  messages = [{ role: 'system', content: getSystemPrompt(deepThink) }];
+  messages = [{ role: 'system', content: getSystemPrompt(detail) }];
   $('prompt').value = '';
   $('stats').textContent = 'No model';
   $('emptyHint').style.display = '';
@@ -183,7 +185,7 @@ async function saveSettings() {
   ls.set('ai3d.endpoint', settings.endpoint);
   ls.set('ai3d.model', settings.model);
   ls.set('ai3d.apiKey', settings.apiKey);
-  await saveAccountSettings(currentAccount, settings, lightTheme, deepThink);
+  await saveAccountSettings(currentAccount, settings, lightTheme, detail);
   updateModelPill();
   $('settingsDlg').close();
 }
@@ -209,11 +211,11 @@ async function handleSignIn() {
     ls.set('ai3d.currentAccount', username);
     const accSettings = await loadAccountSettings(currentAccount, settings);
     if (accSettings.theme) { lightTheme = accSettings.theme === 'light'; ls.set('ai3d.theme', accSettings.theme); }
-    if (accSettings.deepThink !== null) { deepThink = accSettings.deepThink; ls.set('ai3d.deepThink', String(deepThink)); }
+    if (accSettings.detail !== null) { detail = accSettings.detail; ls.set('ai3d.detail', String(detail)); }
     applyTheme(lightTheme);
     document.body.setAttribute('data-theme', lightTheme ? 'light' : 'dark');
     $('themeBtn').textContent = lightTheme ? '☀️' : '🌙';
-    syncDeepThink(false);
+    syncDetail(false);
     updateAccountDrawer(currentAccount); bindAccountDrawer();
     closeAuthDialog();
     const projects = await getProjects(currentAccount.username);
@@ -235,7 +237,7 @@ async function handleSignUp() {
   try {
     currentAccount = await createAccount(username, password);
     ls.set('ai3d.currentAccount', username);
-    await saveAccountSettings(currentAccount, settings, lightTheme, deepThink);
+    await saveAccountSettings(currentAccount, settings, lightTheme, detail);
     updateAccountDrawer(currentAccount); bindAccountDrawer();
     closeAuthDialog();
     await loadProject(null);
@@ -320,15 +322,16 @@ $('themeBtn').addEventListener('click', () => {
   applyTheme(lightTheme);
   document.body.setAttribute('data-theme', lightTheme ? 'light' : 'dark');
   $('themeBtn').textContent = lightTheme ? '☀️' : '🌙';
-  saveAccountSettings(currentAccount, settings, lightTheme, deepThink);
+  saveAccountSettings(currentAccount, settings, lightTheme, detail);
 });
 
-const deepThinkEl = document.createElement('div');
-deepThinkEl.className = 'toggle-row' + (deepThink ? ' on' : '');
-deepThinkEl.id = 'deepThinkToggle';
-deepThinkEl.innerHTML = '<div class="toggle"></div><span>Deep Think</span>';
-$('settingsDlg').querySelector('.dlg-actions').before(deepThinkEl);
-deepThinkEl.addEventListener('click', () => { deepThink = !deepThink; syncDeepThink(); });
+const detailSelect = document.createElement('select');
+detailSelect.id = 'detailSelect';
+detailSelect.className = 'detail-select';
+detailSelect.innerHTML = '<option value="low">Low poly</option><option value="medium">Medium</option><option value="high">High detail</option>';
+detailSelect.value = detail;
+detailSelect.addEventListener('change', () => { detail = detailSelect.value; syncDetail(); });
+$('chatInputRow').prepend(detailSelect);
 
 $('authSignIn').addEventListener('click', handleSignIn);
 $('authSignUp').addEventListener('click', handleSignUp);
@@ -382,11 +385,11 @@ async function init() {
     if (currentAccount) {
       const accSettings = await loadAccountSettings(currentAccount, settings);
       if (accSettings.theme) { lightTheme = accSettings.theme === 'light'; ls.set('ai3d.theme', accSettings.theme); }
-      if (accSettings.deepThink !== null) { deepThink = accSettings.deepThink; ls.set('ai3d.deepThink', String(deepThink)); }
+      if (accSettings.detail !== null) { detail = accSettings.detail; ls.set('ai3d.detail', String(detail)); }
       applyTheme(lightTheme);
       document.body.setAttribute('data-theme', lightTheme ? 'light' : 'dark');
       $('themeBtn').textContent = lightTheme ? '☀️' : '🌙';
-      syncDeepThink(false);
+      syncDetail(false);
       updateAccountDrawer(currentAccount); bindAccountDrawer();
       const projects = await getProjects(currentAccount.username);
       if (projects.length) await loadProject(projects[0]);

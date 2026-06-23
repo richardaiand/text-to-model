@@ -301,6 +301,17 @@ main.drawer-collapsed .project-drawer { display: none; }
   gap: 8px;
   align-items: flex-end;
 }
+.detail-select {
+  background: var(--bg-2);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+.detail-select:focus { outline: none; border-color: var(--accent); }
 textarea {
   width: 100%;
   min-height: 52px;

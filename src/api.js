@@ -1,8 +1,8 @@
-import { SYSTEM_PROMPT, DEEP_THINK_SUFFIX } from './constants.js';
+import { SYSTEM_PROMPT, DETAIL_PROMPTS } from './constants.js';
 import { ls } from './utils.js';
 
-export function getSystemPrompt(deepThink) {
-  return deepThink ? SYSTEM_PROMPT + DEEP_THINK_SUFFIX : SYSTEM_PROMPT;
+export function getSystemPrompt(detail = 'medium') {
+  return SYSTEM_PROMPT + (DETAIL_PROMPTS[detail] || DETAIL_PROMPTS.medium);
 }
 
 export const settings = {
@@ -18,8 +18,8 @@ export function baseEndpoint() {
   return settings.endpoint.replace(/\/+$/, '');
 }
 
-export async function callAgent(userPrompt, signal, messages, deepThink) {
-  const msgs = [{ role: 'system', content: getSystemPrompt(deepThink) }, ...messages.filter(m => m.role !== 'system')];
+export async function callAgent(userPrompt, signal, messages, detail = 'medium') {
+  const msgs = [{ role: 'system', content: getSystemPrompt(detail) }, ...messages.filter(m => m.role !== 'system')];
   msgs.push({ role: 'user', content: userPrompt });
   if (msgs.length > 12) msgs.splice(1, msgs.length - 11);
 

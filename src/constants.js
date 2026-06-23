@@ -107,30 +107,46 @@ function buildModel(THREE) {
 }
 \`\`\``;
 
-export const DEEP_THINK_SUFFIX = `
+export const DETAIL_PROMPTS = {
+  low: `
 
-IMPORTANT — DEEP THINK MODE:
-Before writing any code, think through your design step by step:
-1. Identify every distinct part of the object (body, handle, lid, base, details).
-2. For each part, choose the best THREE.js primitive geometry and explain why.
-3. Plan which CONNECTION HELPER to use for each joint (placeOn, stack, nestle, align).
-4. Choose material colors, roughness, and metalness values that make the object look realistic.
-5. Verify every part connects — no floating parts, no gaps, no z-fighting. Use nestle for handles and appendages.
-6. Only after this planning, write the buildModel(THREE) function using the helpers.
-Take your time. Quality matters more than speed. Use the full reasoning budget.`;
+DETAIL LEVEL — LOW POLY:
+- Build a clean, recognizable model using the FEWEST primitives possible.
+- Use low segment counts (e.g., 8–16 segments for cylinders/spheres).
+- No tiny details, no text, no logos, no surface patterns.
+- Focus on silhouette and overall shape. One material per major part is fine.
+- Keep code short and fast to generate.`,
+  medium: `
+
+DETAIL LEVEL — MEDIUM:
+- Build a recognizable model with good proportions and a few distinct parts.
+- Use moderate segment counts (e.g., 16–32 segments) for smooth curves.
+- Add 2–4 smaller details (buttons, handles, rims, simple features) using helpers.
+- Use 2–4 materials with sensible colors, roughness, and metalness.
+- Balance quality with generation speed.`,
+  high: `
+
+DETAIL LEVEL — HIGH:
+- Build a detailed, realistic model with multiple distinct parts and refined proportions.
+- Use higher segment counts (e.g., 32–64 segments) for smooth, high-quality surfaces.
+- Add fine details: seams, bevels, buttons, handles, lids, bases, labels, etc.
+- Use 3–6 materials with carefully chosen colors, roughness, metalness, and emissive where appropriate.
+- Verify every connection with placeOn/stack/nestle/align. No floating parts, no gaps.
+- Take your time; quality matters.`,
+};
 
 export const AIAND_ENDPOINT = 'https://api.aiand.com/v1';
 
 export const AIAND_MODELS = [
-  { id: 'deepseek-ai/deepseek-v4-flash', name: 'DeepSeek v4 Flash', works: true,  desc: 'Fastest response · ~5s',  openSource: true, tags: ['fastest'] },
-  { id: 'deepseek-ai/deepseek-v4-pro',   name: 'DeepSeek v4 Pro',   works: true,  desc: 'Best speed/quality · ~6s', openSource: true, tags: ['balanced'] },
-  { id: 'openai/gpt-oss-120b',           name: 'GPT-OSS 120B',      works: true,  desc: 'Best quality · ~8s',      openSource: true, tags: ['quality'] },
-  { id: 'google/gemma-4-31b-it',         name: 'Gemma 4 31B',       works: true,  desc: 'Google · ~14s',          openSource: true, tags: [] },
-  { id: 'zai-org/glm-5.1',              name: 'GLM 5.1',           works: true,  desc: 'Z.AI · ~18s',            openSource: true, tags: [] },
-  { id: 'moonshotai/kimi-k2.7-code',    name: 'Kimi K2.7 Code',    works: true,  desc: 'Code-focused · ~21s',   openSource: true, tags: [] },
-  { id: 'moonshotai/kimi-k2.6',         name: 'Kimi K2.6',         works: false, desc: 'Times out (>30s limit)', openSource: true, tags: [] },
-  { id: 'qwen/qwen3.6-27b',             name: 'Qwen 3.6 27B',      works: false, desc: 'Times out (>30s limit)', openSource: true, tags: [] },
-  { id: 'zai-org/glm-5.2',              name: 'GLM 5.2',           works: false, desc: 'Times out (>30s limit)', openSource: true, tags: [] },
+  { id: 'deepseek-ai/deepseek-v4-flash', name: 'DeepSeek v4 Flash', works: true, desc: 'Fastest · ~5s · good for drafts',          openSource: true, tags: ['fastest'] },
+  { id: 'deepseek-ai/deepseek-v4-pro',   name: 'DeepSeek v4 Pro',   works: true, desc: 'Fast · ~8s · best speed/quality balance',  openSource: true, tags: ['balanced'] },
+  { id: 'openai/gpt-oss-120b',           name: 'GPT-OSS 120B',      works: true, desc: 'High quality · ~20s · excellent detail',   openSource: true, tags: ['quality'] },
+  { id: 'google/gemma-4-31b-it',         name: 'Gemma 4 31B',       works: true, desc: 'Quality · ~30s · strong detail',           openSource: true, tags: ['quality'] },
+  { id: 'zai-org/glm-5.1',              name: 'GLM 5.1',           works: true, desc: 'Quality · ~35s · great composition',       openSource: true, tags: ['quality'] },
+  { id: 'moonshotai/kimi-k2.7-code',    name: 'Kimi K2.7 Code',    works: true, desc: 'Code-focused · ~40s · precise geometry',   openSource: true, tags: ['quality'] },
+  { id: 'moonshotai/kimi-k2.6',         name: 'Kimi K2.6',         works: true, desc: 'Highest quality · ~60s · very detailed',   openSource: true, tags: ['quality'] },
+  { id: 'qwen/qwen3.6-27b',             name: 'Qwen 3.6 27B',      works: true, desc: 'High quality · ~55s · detailed models',    openSource: true, tags: ['quality'] },
+  { id: 'zai-org/glm-5.2',              name: 'GLM 5.2',           works: true, desc: 'Highest quality · ~70s · most detailed',   openSource: true, tags: ['quality'] },
 ];
 
 export const OTHER_PRESETS = [

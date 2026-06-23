@@ -149,18 +149,18 @@ export async function saveMessage(msg) {
 }
 
 export async function loadAccountSettings(account, settings) {
-  if (!account) return { theme: null, deepThink: null };
+  if (!account) return { theme: null, detail: null };
   const s = await dbRequest('settings', 'readonly', store => store.get(account.username));
   if (s) {
     if (s.endpoint) settings.endpoint = s.endpoint;
     if (s.model) settings.model = s.model;
     if (s.apiKey) settings.apiKey = s.apiKey;
-    return { theme: s.theme || null, deepThink: typeof s.deepThink === 'boolean' ? s.deepThink : null };
+    return { theme: s.theme || null, detail: ['low', 'medium', 'high'].includes(s.detail) ? s.detail : null };
   }
-  return { theme: null, deepThink: null };
+  return { theme: null, detail: null };
 }
 
-export async function saveAccountSettings(account, settings, lightTheme, deepThink) {
+export async function saveAccountSettings(account, settings, lightTheme, detail) {
   if (!account) return;
   await dbRequest('settings', 'readwrite', store => store.put({
     accountId: account.username,
@@ -168,6 +168,6 @@ export async function saveAccountSettings(account, settings, lightTheme, deepThi
     model: settings.model,
     apiKey: settings.apiKey,
     theme: lightTheme ? 'light' : 'dark',
-    deepThink,
+    detail,
   }));
 }
