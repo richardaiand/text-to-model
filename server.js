@@ -37,6 +37,12 @@ function readBody(req) {
   });
 }
 
+function sse(res, data) {
+  if (!res.writableEnded) {
+    res.write(`data: ${JSON.stringify(data)}\n\n`);
+  }
+}
+
 async function proxyChat(req, res) {
   let upstreamReader = null;
   let keepAlive = null;
@@ -47,7 +53,7 @@ async function proxyChat(req, res) {
   const upstreamTimeout = setTimeout(() => {
     abortReason = 'timeout';
     abort.abort();
-  }, 29000);
+  }, 28000);
 
   const cleanup = () => {
     clearTimeout(upstreamTimeout);
@@ -75,7 +81,7 @@ async function proxyChat(req, res) {
   req.on('close', onReqClose);
   req.on('error', onReqError);
 
-  function sendJson(status, obj) {
+  function failJson(status, obj) {
     const body = JSON.stringify(obj);
     res.writeHead(status, {
       'Content-Type': 'application/json',
@@ -84,13 +90,36 @@ async function proxyChat(req, res) {
     res.end(body);
   }
 
+  let body;
   try {
-    const { endpoint, apiKey, model, messages, temperature } = await readBody(req);
-    if (!endpoint || !apiKey || !model || !messages) {
-      sendJson(400, { error: 'Missing endpoint, apiKey, model, or messages' });
-      cleanup();
-      return;
+    body = await readBody(req);
+  } catch (e) {
+    failJson(400, { error: 'Invalid JSON body' });
+    cleanup();
+    return;
+  }
+
+  const { endpoint, apiKey, model, messages, temperature } = body;
+  if (!endpoint || !apiKey || !model || !messages) {
+    failJson(400, { error: 'Missing endpoint, apiKey, model, or messages' });
+    cleanup();
+    return;
+  }
+
+  res.writeHead(200, {
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    'X-Accel-Buffering': 'no',
+    'Connection': 'keep-alive',
+  });
+
+  keepAlive = setInterval(() => {
+    if (!res.writableEnded) {
+      res.write(': keep-alive\n\n');
     }
+  }, 3000);
+
+  try {
     const base = String(endpoint).replace(/\/+$/, '');
     upstreamRes = await fetch(base + '/chat/completions', {
       method: 'POST',
@@ -106,24 +135,12 @@ async function proxyChat(req, res) {
       const text = await upstreamRes.text().catch(() => '');
       cleanup();
       if (!res.writableEnded) {
-        const body = text || JSON.stringify({ error: 'Upstream error' });
-        res.writeHead(upstreamRes.status, { 'Content-Type': 'text/plain', 'Content-Length': Buffer.byteLength(body) });
-        res.end(body);
+        sse(res, { error: { message: text || 'Upstream error ' + upstreamRes.status } });
       }
+      if (!res.writableEnded) res.end();
       return;
     }
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache, no-transform',
-      'X-Accel-Buffering': 'no',
-      'Connection': 'keep-alive',
-    });
     upstreamReader = upstreamRes.body.getReader();
-    keepAlive = setInterval(() => {
-      if (!res.writableEnded) {
-        res.write(': keep-alive\n\n');
-      }
-    }, 5000);
     while (true) {
       const { done, value } = await upstreamReader.read();
       if (done) break;
@@ -133,16 +150,11 @@ async function proxyChat(req, res) {
     finished = true;
   } catch (e) {
     console.error('proxy error:', e.message, { reason: abortReason });
-    if (res.headersSent && !res.writableEnded) {
+    if (!res.writableEnded) {
       const message = abortReason === 'timeout'
-        ? 'Generation timed out (29s limit). Try a faster model.'
-        : 'Generation aborted.';
-      res.write(`data: ${JSON.stringify({ error: { message } })}\n\n`);
-    } else if (!res.headersSent && !res.writableEnded) {
-      const message = abortReason === 'timeout'
-        ? 'Generation timed out (29s limit). Try a faster model like DeepSeek v4 Flash.'
+        ? 'Generation timed out (28s limit). Try a faster model like DeepSeek v4 Flash.'
         : (abortReason === 'client disconnected' ? 'Client disconnected.' : 'Proxy error: ' + e.message);
-      sendJson(502, { error: { message } });
+      sse(res, { error: { message } });
     }
   } finally {
     cleanup();
