@@ -58,7 +58,7 @@ async function proxyChat(req, res) {
   const cleanup = () => {
     clearTimeout(upstreamTimeout);
     if (keepAlive) clearInterval(keepAlive);
-    req.off('close', onReqClose);
+    res.off('close', onReqClose);
     req.off('error', onReqError);
     if (!finished) {
       try { abort.abort(); } catch {}
@@ -78,7 +78,7 @@ async function proxyChat(req, res) {
     }
   };
 
-  req.on('close', onReqClose);
+  res.on('close', onReqClose);
   req.on('error', onReqError);
 
   function failJson(status, obj) {

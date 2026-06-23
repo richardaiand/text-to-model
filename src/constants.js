@@ -138,15 +138,15 @@ DETAIL LEVEL — HIGH:
 export const AIAND_ENDPOINT = 'https://api.aiand.com/v1';
 
 export const AIAND_MODELS = [
-  { id: 'deepseek-ai/deepseek-v4-flash', name: 'DeepSeek v4 Flash', works: true, desc: 'Fastest · ~5s · good for drafts',          openSource: true, tags: ['fastest'] },
-  { id: 'deepseek-ai/deepseek-v4-pro',   name: 'DeepSeek v4 Pro',   works: true, desc: 'Fast · ~8s · best speed/quality balance',  openSource: true, tags: ['balanced'] },
-  { id: 'openai/gpt-oss-120b',           name: 'GPT-OSS 120B',      works: true, desc: 'High quality · ~20s · excellent detail',   openSource: true, tags: ['quality'] },
-  { id: 'google/gemma-4-31b-it',         name: 'Gemma 4 31B',       works: true, desc: 'Quality · ~30s · strong detail',           openSource: true, tags: ['quality'] },
-  { id: 'zai-org/glm-5.1',              name: 'GLM 5.1',           works: true, desc: 'Quality · ~35s · great composition',       openSource: true, tags: ['quality'] },
-  { id: 'moonshotai/kimi-k2.7-code',    name: 'Kimi K2.7 Code',    works: true, desc: 'Code-focused · ~40s · precise geometry',   openSource: true, tags: ['quality'] },
-  { id: 'moonshotai/kimi-k2.6',         name: 'Kimi K2.6',         works: true, desc: 'Highest quality · ~60s · very detailed',   openSource: true, tags: ['quality'] },
-  { id: 'qwen/qwen3.6-27b',             name: 'Qwen 3.6 27B',      works: true, desc: 'High quality · ~55s · detailed models',    openSource: true, tags: ['quality'] },
-  { id: 'zai-org/glm-5.2',              name: 'GLM 5.2',           works: true, desc: 'Highest quality · ~70s · most detailed',   openSource: true, tags: ['quality'] },
+  { id: 'deepseek-ai/deepseek-v4-flash', name: 'DeepSeek v4 Flash', works: true, desc: 'Fastest drafts · great for quick silhouettes',      openSource: true, tags: ['fastest'] },
+  { id: 'deepseek-ai/deepseek-v4-pro',   name: 'DeepSeek v4 Pro',   works: true, desc: 'Best speed/quality balance · reliable defaults',    openSource: true, tags: ['balanced'] },
+  { id: 'openai/gpt-oss-120b',           name: 'GPT-OSS 120B',      works: true, desc: 'Excellent spatial reasoning · clean part layouts',  openSource: true, tags: ['quality'] },
+  { id: 'google/gemma-4-31b-it',         name: 'Gemma 4 31B',       works: true, desc: 'Strong mechanical details · good proportions',      openSource: true, tags: ['quality'] },
+  { id: 'zai-org/glm-5.1',              name: 'GLM 5.1',           works: true, desc: 'Great composition · cohesive multi-part designs',   openSource: true, tags: ['quality'] },
+  { id: 'moonshotai/kimi-k2.7-code',    name: 'Kimi K2.7 Code',    works: true, desc: 'Code-focused · precise geometry and fewer bugs',    openSource: true, tags: ['quality'] },
+  { id: 'moonshotai/kimi-k2.6',         name: 'Kimi K2.6',         works: true, desc: 'Very detailed · nuanced material choices',          openSource: true, tags: ['quality'] },
+  { id: 'qwen/qwen3.6-27b',             name: 'Qwen 3.6 27B',      works: true, desc: 'Detailed organic shapes · good curves',             openSource: true, tags: ['quality'] },
+  { id: 'zai-org/glm-5.2',              name: 'GLM 5.2',           works: true, desc: 'Most detailed · best for complex scenes',           openSource: true, tags: ['quality'] },
 ];
 
 export const OTHER_PRESETS = [
