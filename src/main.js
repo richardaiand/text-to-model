@@ -74,15 +74,17 @@ async function generate() {
     await renderProjectList(currentAccount, currentProject, { onSelect: loadProject, onDelete: handleDeleteProject, onRename: handleRenameProject });
   }
 
+  const startTime = performance.now();
   try {
     const raw = await callAgent(prompt, abort.signal, messages, detail);
+    const elapsedMs = Math.round(performance.now() - startTime);
     const { code, plan } = parseResponse(raw);
     messages.push({ role: 'user', content: prompt });
-    messages.push({ role: 'assistant', content: raw });
+    messages.push({ role: 'assistant', content: raw, elapsedMs });
 
     if (currentProject && currentAccount) {
       const userMsg = { projectId: currentProject.id, role: 'user', content: prompt, createdAt: Date.now() };
-      const aiMsg = { projectId: currentProject.id, role: 'assistant', content: raw, plan, code, createdAt: Date.now() + 1 };
+      const aiMsg = { projectId: currentProject.id, role: 'assistant', content: raw, plan, code, elapsedMs, createdAt: Date.now() + 1 };
       await saveMessage(userMsg);
       await saveMessage(aiMsg);
       currentProject.title = currentProject.title || prompt.slice(0, 40);
@@ -147,7 +149,7 @@ async function loadProject(project) {
   }
 
   const stored = await getMessages(project.id);
-  stored.forEach((m) => messages.push({ role: m.role, content: m.content }));
+  stored.forEach((m) => messages.push({ role: m.role, content: m.content, plan: m.plan, code: m.code, elapsedMs: m.elapsedMs }));
   renderChatThread(messages);
 
   const lastCode = stored.filter(m => m.role === 'assistant' && m.code).pop()?.code;

@@ -34,6 +34,16 @@ export function renderChatThread(messages) {
       bubble.textContent = m.content;
     } else {
       const parsed = parseResponse(m.content);
+      const meta = document.createElement('div');
+      meta.className = 'msg-meta';
+      let metaText = 'Agent';
+      if (m.elapsedMs != null) {
+        const s = (m.elapsedMs / 1000).toFixed(1);
+        metaText += ` · ${s}s`;
+      }
+      meta.textContent = metaText;
+      bubble.appendChild(meta);
+
       if (parsed.plan) {
         const details = document.createElement('details');
         details.className = 'think-block';
@@ -47,10 +57,17 @@ export function renderChatThread(messages) {
         details.appendChild(body);
         bubble.appendChild(details);
       }
+
+      const codeWrap = document.createElement('details');
+      codeWrap.className = 'code-block';
+      const codeSummary = document.createElement('summary');
+      codeSummary.textContent = 'Show code';
       const pre = document.createElement('pre');
       pre.className = 'chat-code';
-      pre.textContent = parsed.code.slice(0, 500) + (parsed.code.length > 500 ? '\n...' : '');
-      bubble.appendChild(pre);
+      pre.textContent = parsed.code.slice(0, 2000) + (parsed.code.length > 2000 ? '\n...' : '');
+      codeWrap.appendChild(codeSummary);
+      codeWrap.appendChild(pre);
+      bubble.appendChild(codeWrap);
     }
     row.appendChild(bubble);
     thread.appendChild(row);

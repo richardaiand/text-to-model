@@ -254,12 +254,31 @@ main.drawer-collapsed .project-drawer { display: none; }
   border: 1px solid var(--border);
   border-bottom-left-radius: 4px;
 }
+.msg-meta {
+  font-size: 11px;
+  color: var(--muted);
+  margin-bottom: 6px;
+}
 .think-block {
   margin-bottom: 8px;
   border: 1px solid var(--border);
   border-radius: 8px;
   background: var(--bg-2);
   overflow: hidden;
+}
+.code-block {
+  margin-top: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--bg-2);
+  overflow: hidden;
+}
+.code-block summary {
+  padding: 6px 10px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
 }
 .think-block summary {
   padding: 6px 10px;
