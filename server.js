@@ -1,10 +1,17 @@
-const express = require('express');
-const path = require('path');
+console.log('[BOOT] starting server.js');
 
-const app = express();
-const PORT = process.env.PORT || 3000;
+try {
+  const express = require('express');
+  const path = require('path');
 
-app.use(express.json({ limit: '2 * 1024 * 1024' }));
+  const app = express();
+  const PORT = process.env.PORT || 3000;
+
+  console.log('[BOOT] express loaded, port:', PORT);
+
+  app.use(express.json({ limit: '2 * 1024 * 1024' }));
+
+  app.get('/health', (req, res) => res.send('ok'));
 
 async function proxyChat(req, res) {
   let upstreamReader = null;
@@ -124,6 +131,10 @@ app.get('*', (req, res) => {
   res.sendFile(path.join(__dirname, 'index.html'));
 });
 
-app.listen(PORT, () => {
-  console.log(`text-to-model serving on port ${PORT}`);
-});
+  app.listen(PORT, '0.0.0.0', () => {
+    console.log(`[BOOT] text-to-model serving on port ${PORT}`);
+  });
+} catch (err) {
+  console.error('[BOOT FATAL]', err);
+  process.exit(1);
+}
