@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node server.js"
   },
-  "dependencies": {}
+  "dependencies": {},
   "engines": {
     "node": "20.x"
   }
