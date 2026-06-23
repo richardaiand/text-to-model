@@ -129,7 +129,7 @@ export async function renderProjectList(currentAccount, currentProject, callback
 }
 
 export function buildModelList() {
-  const TAG_LABELS = { fastest: 'Fastest', quality: 'Best Quality', balanced: 'Balanced' };
+  const TAG_LABELS = { fastest: 'Fastest', quality: 'Quality', balanced: 'Balanced', best: 'Best' };
   const wrap = $('modelList');
   wrap.innerHTML = '';
   AIAND_MODELS.forEach((m) => {

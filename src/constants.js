@@ -146,7 +146,7 @@ export const AIAND_MODELS = [
   { id: 'moonshotai/kimi-k2.7-code',    name: 'Kimi K2.7 Code',    works: true, desc: 'Code-focused · precise geometry and fewer bugs',    openSource: true, tags: ['quality'] },
   { id: 'moonshotai/kimi-k2.6',         name: 'Kimi K2.6',         works: true, desc: 'Very detailed · nuanced material choices',          openSource: true, tags: ['quality'] },
   { id: 'qwen/qwen3.6-27b',             name: 'Qwen 3.6 27B',      works: true, desc: 'Detailed organic shapes · good curves',             openSource: true, tags: ['quality'] },
-  { id: 'zai-org/glm-5.2',              name: 'GLM 5.2',           works: true, desc: 'Most detailed · best for complex scenes',           openSource: true, tags: ['quality'] },
+  { id: 'zai-org/glm-5.2',              name: 'GLM 5.2',           works: true, desc: 'Highest overall quality · best for complex scenes', openSource: true, tags: ['best'] },
 ];
 
 export const OTHER_PRESETS = [
