@@ -1,4 +1,3 @@
-import './style.css';
 import { $, ls, parseResponse } from './utils.js';
 import { settings, callAgent, getSystemPrompt } from './api.js';
 import { AIAND_ENDPOINT } from './constants.js';
