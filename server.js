@@ -112,12 +112,14 @@ async function proxyChat(req, res) {
     'X-Accel-Buffering': 'no',
     'Connection': 'keep-alive',
   });
+  if (res.socket) res.socket.setNoDelay(true);
+  res.write(': start\n\n');
 
   keepAlive = setInterval(() => {
     if (!res.writableEnded) {
       res.write(': keep-alive\n\n');
     }
-  }, 3000);
+  }, 1000);
 
   try {
     const base = String(endpoint).replace(/\/+$/, '');
@@ -152,7 +154,7 @@ async function proxyChat(req, res) {
     console.error('proxy error:', e.message, { reason: abortReason });
     if (!res.writableEnded) {
       const message = abortReason === 'timeout'
-        ? 'Generation timed out (28s limit). Try a faster model like DeepSeek v4 Flash.'
+        ? 'Generation timed out (118s limit). Try a faster model or lower detail level.'
         : (abortReason === 'client disconnected' ? 'Client disconnected.' : 'Proxy error: ' + e.message);
       sse(res, { error: { message } });
     }
